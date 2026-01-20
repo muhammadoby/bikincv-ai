@@ -1,13 +1,18 @@
 {
   "name": "bikincv-node",
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "author": {
+    "name": "AW BALI DIGITAL",
+    "email": "awbalidigital@gmail.com",
+    "url": "https://awbalidigital.com"
+  },
   "private": true,
   "type": "module",
   "license": "UNLICENSED",
   "scripts": {
     "start": "node bin/server.js",
     "build": "node ace build",
-    "dev": "node ace serve --hmr",
+    "dev": "node ace serve --watch",
     "test": "node ace test",
     "lint": "eslint .",
     "format": "prettier --write .",
@@ -54,11 +59,22 @@
     "@adonisjs/auth": "^9.4.0",
     "@adonisjs/core": "^6.18.0",
     "@adonisjs/cors": "^2.2.1",
+    "@adonisjs/drive": "^3.4.1",
+    "@adonisjs/limiter": "^2.4.0",
     "@adonisjs/lucid": "^21.6.1",
+    "@adonisjs/mail": "^9.2.2",
+    "@adonisjs/redis": "^9.2.0",
+    "@aws-sdk/client-s3": "^3.971.0",
+    "@aws-sdk/s3-request-presigner": "^3.971.0",
+    "@google-cloud/storage": "^7.18.0",
     "@vinejs/vine": "^3.0.1",
+    "adonis-autoswagger": "^3.73.0",
     "axios": "^1.13.2",
+    "canvas": "^3.2.1",
+    "edge.js": "^6.4.0",
     "luxon": "^3.7.2",
     "mysql2": "^3.16.1",
+    "pdfjs-dist": "^5.4.530",
     "reflect-metadata": "^0.2.2"
   },
   "hotHook": {

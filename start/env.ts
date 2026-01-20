@@ -27,5 +27,49 @@ export default await Env.create(new URL('../', import.meta.url), {
   DB_PORT: Env.schema.number(),
   DB_USER: Env.schema.string(),
   DB_PASSWORD: Env.schema.string.optional(),
-  DB_DATABASE: Env.schema.string()
+  DB_DATABASE: Env.schema.string(),
+
+  /*
+  |----------------------------------------------------------
+  | Variables for configuring api secret
+  |----------------------------------------------------------
+  */
+  API_SECRET_STAGING: Env.schema.string(),
+  API_SECRET_PROD: Env.schema.string(),
+
+  /*
+  |----------------------------------------------------------
+  | Variables for configuring the mail package
+  |----------------------------------------------------------
+  */
+  SMTP_HOST: Env.schema.string(),
+  SMTP_PORT: Env.schema.string(),
+  SMTP_USERNAME: Env.schema.string(),
+  SMTP_PASSWORD: Env.schema.string(),
+  MAILGUN_API_KEY: Env.schema.string(),
+  MAILGUN_DOMAIN: Env.schema.string(),
+
+  REDIS_HOST: Env.schema.string({ format: 'host' }),
+  REDIS_PORT: Env.schema.number(),
+  REDIS_PASSWORD: Env.schema.string.optional(),
+
+  /*
+  |----------------------------------------------------------
+  | Variables for configuring the drive package
+  |----------------------------------------------------------
+  */
+  DRIVE_DISK: Env.schema.enum(['fs', 's3'] as const),
+  AWS_ACCESS_KEY_ID: Env.schema.string(),
+  AWS_SECRET_ACCESS_KEY: Env.schema.string(),
+  AWS_REGION: Env.schema.string(),
+  S3_BUCKET: Env.schema.string(),
+  GCS_KEY: Env.schema.string(),
+  GCS_BUCKET: Env.schema.string(),
+
+  /*
+  |----------------------------------------------------------
+  | Variables for configuring the limiter package
+  |----------------------------------------------------------
+  */
+  LIMITER_STORE: Env.schema.enum(['database', 'redis', 'memory'] as const)
 })
