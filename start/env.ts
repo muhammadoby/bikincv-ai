@@ -71,5 +71,14 @@ export default await Env.create(new URL('../', import.meta.url), {
   | Variables for configuring the limiter package
   |----------------------------------------------------------
   */
-  LIMITER_STORE: Env.schema.enum(['database', 'redis', 'memory'] as const)
+  LIMITER_STORE: Env.schema.enum(['database', 'redis', 'memory'] as const),
+
+  /*
+  |----------------------------------------------------------
+  | Variables for configuring the n8n
+  |----------------------------------------------------------
+  */
+  NODEMATION_AI_URL: Env.schema.string(),
+  NODEMATION_AI_APIKEY: Env.schema.string(),
+  REDIS_QUEUE: Env.schema.string.optional()
 })

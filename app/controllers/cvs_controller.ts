@@ -3,7 +3,7 @@ import { inject } from '@adonisjs/core';
 import type { HttpContext } from '@adonisjs/core/http'
 import BaseMessage from '../utils/base_message.js';
 import { CvAnalyzeSchema } from '#validators/cv_validator';
-import axios from 'axios';
+import nodemationApiConfig from '../api/nodemation_api.js';
 import logger from '@adonisjs/core/services/logger';
 
 @inject()
@@ -23,21 +23,23 @@ export default class CvsController {
     try {
       const result = await this.service.summarize(payload)
 
-      const n8nResponse = await axios.post(
-        'http://localhost:5678/webhook-test/cv/analyze',
-        result,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      ).then(res => res.data[0].data)
-
-      return response.status(200).send(BaseMessage<typeof result & { n8nResponse: any }>(true, "Cv analyzed successfully", {
+      // send data to nodemation
+      const data = {
         ...result,
-        n8nResponse
+        cv_lang: payload.cv_lang,
+        language_style: payload.language_style
+      }
+
+      const n8nResponse = await nodemationApiConfig.post('/webhook/cv/analyze', data).then(res => res.data)
+
+      logger.info(n8nResponse)
+
+      return response.status(200).send(BaseMessage<typeof result & { ai_response: typeof n8nResponse }>(true, "Cv analyzed successfully", {
+        ...result,
+        ai_response: n8nResponse
       }))
     } catch (error) {
+      logger.error(error);
       return response.status(error.status || 500).send(BaseMessage(false, error.message))
     }
   }

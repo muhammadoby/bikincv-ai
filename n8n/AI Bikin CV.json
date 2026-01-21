@@ -1,0 +1,215 @@
+{
+  "name": "AI Bikin CV",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "cv/analyze",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        96,
+        0
+      ],
+      "id": "8ec4fe92-5e1b-4499-9844-395fd5d838e5",
+      "name": "Webhook",
+      "webhookId": "19fa0207-c378-45bd-8832-dd73a62019cc",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "zGf287vIMVZeriGK",
+          "name": "Header Auth account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Role: Anda adalah seorang Senior HR Auditor dan Specialist Resume Reviewer.\nTugas: Lakukan audit mendalam terhadap data CV berikut. Anda harus membandingkan antara Markdown Version dan Raw Text untuk menentukan apakah sebuah kesalahan berasal dari sistem (Parsing Error) atau dari kandidat (CV Typo).\n\nLogika Audit:\nParsing Error: Jika di Markdown kata menempel (contoh: \"June2023\") tetapi di Raw Text kata tersebut terpisah dengan benar (\"June 2023\").\nCV Typo: Jika di kedua data (Markdown & Raw Text) kata tersebut memang salah tulis (contoh: \"Jule\" seharusnya \"July\" atau \"Smp\" seharusnya \"SMP\").\nDiksi & Profesionalisme: Berikan saran penggantian kalimat yang terlalu informal (contoh: \"Hello I am\") menjadi lebih profesional dan ramah ATS menggunakan action verbs.\nStandardisasi: Pastikan penulisan teknologi benar (contoh: \"Next JS\" menjadi \"Next.js\") dan akronim menggunakan huruf kapital (contoh: \"osis\" menjadi \"OSIS\", \"smk\" menjadi \"SMK\").\nResponse: Berikan gaya response yang dipilih kalau misal pilih yang professional maka berikan saran yang professional, jika yang dipilih adalah bahasa yang casual maka gunakan bahasa yang seperti GEN Z contoh (\"cv lu kurang di bagian ini nih\", \"lu\", \"gua\"), dan sesuaikan response menggunakan bahasa yang dipilih. Kalau misal kesalahan dari parser nya jangan ditampilkan hanya kasih saran dari yang benar-benar kesalahan dari si user. Dan jangan menggunakan kata / bahasa yang bisa mengekspos flow dari sistem seperti (\"Raw text\", \"Sistem Parsing\").\n\n\nData Input:\nSelected Language Style: {{ $json.body.language_style }}\nSelcted Language: {{ $json.body.cv_lang }}\nRaw Text (Source of Truth): {{ $json.body.raw_text }} \nStructured Markdown: {{ $json.body.markdown_version }}\n\nInstruksi Output (Hanya JSON, Tanpa Penjelasan):\nKembalikan respon dalam format JSON berikut:\n{\n\"suggestions\": [\n{\n\"section\": \"Nama Bagian (Header/Experience/dll)\",\n\"issue_type\": \"Parsing Error / CV Typo / Diction / Formatting\",\n\"original_phrase\": \"frasa asli yang bermasalah\",\n\"suggested_fix\": \"saran perbaikan\",\n\"reason\": \"Alasan perbaikan (buatkan saran kenapa harus diperbaiki dan berikan saran yang masuk akal)\"\n}\n],\n\"overall_hr_comment\": \"Komentar singkat mengenai kualitas profil kandidat berdasarkan gaya bahasa yang dipilih.\"\n}",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        304,
+        0
+      ],
+      "id": "c5b4c4a7-19fc-4ed8-9cb2-f4e001fbb19f",
+      "name": "AI Agent",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        272,
+        208
+      ],
+      "id": "54128de9-9c43-45db-b96e-fe9cb1aabc93",
+      "name": "Google Gemini Chat Model",
+      "alwaysOutputData": false,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "88t5vcbyLqquoHJz",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        816,
+        -16
+      ],
+      "id": "3dd69c00-4bf5-43e8-ad6f-cd7fa63d5f78",
+      "name": "Respond to Webhook",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "content": "## Accept incoming request\nBikin CV AI Analyze",
+        "height": 432,
+        "width": 544
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        32,
+        -80
+      ],
+      "typeVersion": 1,
+      "id": "48d7c7e1-93ce-4da0-afaf-1b265635788b",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Parse Respose",
+        "height": 432,
+        "width": 448
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        592,
+        -80
+      ],
+      "typeVersion": 1,
+      "id": "95504600-154d-4d57-85da-2a6fe5612d34",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const rawText = $('AI Agent').first().json.output;\n\nconst cleanText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();\n\ntry {\n  const jsonObject = JSON.parse(cleanText);\n  \n  return jsonObject;\n} catch (error) {\n  return {\n    error: \"Gagal mengubah teks ke JSON\",\n    raw_text: cleanText\n  };\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        640,
+        -16
+      ],
+      "id": "f6f20e22-eacc-466b-8c60-bab167406169",
+      "name": "Code in JavaScript",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n\"error\": \"{{ $json.error }}\"\n}",
+        "options": {
+          "responseCode": 500
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        656,
+        144
+      ],
+      "id": "1459c2af-ce66-46a4-b4fb-fec01626b66b",
+      "name": "Respond to Webhook1",
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true,
+    "timeSavedMode": "fixed",
+    "timezone": "Asia/Kuala_Lumpur",
+    "callerPolicy": "workflowsFromSameOwner",
+    "timeSavedPerExecution": 10
+  },
+  "versionId": "f65ae468-5429-4b50-b83b-813d8334c249",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "59d6ef814e92dc5bf136b86ac01ceac7497643a11603d48e61bd0ec29f51a7c0"
+  },
+  "id": "yeUfu59_jHM04pxgZN-Of",
+  "tags": []
+}
