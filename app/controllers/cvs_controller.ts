@@ -34,9 +34,17 @@ export default class CvsController {
 
       logger.info(n8nResponse)
 
-      return response.status(200).send(BaseMessage<typeof result & { ai_response: typeof n8nResponse }>(true, "Cv analyzed successfully", {
+      return response.status(200).send(BaseMessage<
+        typeof result &
+        { selected_language: any } &
+        { language_style: any } &
+        { ai_response: typeof n8nResponse }
+
+      >(true, "Cv analyzed successfully", {
         ...result,
-        ai_response: n8nResponse
+        selected_language: payload.cv_lang,
+        language_style: payload.language_style,
+        ai_response: n8nResponse,
       }))
     } catch (error) {
       logger.error(error);
