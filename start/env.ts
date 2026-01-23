@@ -80,5 +80,14 @@ export default await Env.create(new URL('../', import.meta.url), {
   */
   NODEMATION_AI_URL: Env.schema.string(),
   NODEMATION_AI_APIKEY: Env.schema.string(),
-  REDIS_QUEUE: Env.schema.string.optional()
+  REDIS_QUEUE: Env.schema.string.optional(),
+
+  /*
+  |----------------------------------------------------------
+  | Variables for configuring the payment gateway
+  |----------------------------------------------------------
+  */
+  MIDTRANS_IS_PRODUCTION: Env.schema.string(),
+  MIDTRANS_SERVER_KEY: Env.schema.string(),
+  MIDTRANS_CLIENT_KEY: Env.schema.string(),
 })

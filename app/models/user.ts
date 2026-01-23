@@ -1,11 +1,13 @@
 import { DateTime } from 'luxon'
 import hash from '@adonisjs/core/services/hash'
 import { compose } from '@adonisjs/core/helpers'
-import { BaseModel, column } from '@adonisjs/lucid/orm'
+import { BaseModel, column, hasMany } from '@adonisjs/lucid/orm'
 import { withAuthFinder } from '@adonisjs/auth/mixins/lucid'
 import { DbAccessTokensProvider } from '@adonisjs/auth/access_tokens'
+import AiCvAnalyzer from './ai_cv_analyzer.js'
+import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
 
-const AuthFinder = withAuthFinder(() => hash.use('scrypt'), {
+const AuthFinder = withAuthFinder(() => hash.use('bcrypt'), {
   uids: ['email'],
   passwordColumnName: 'password',
 })
@@ -104,4 +106,10 @@ export default class User extends compose(BaseModel, AuthFinder) {
     type: 'auth_token',
     tokenSecretLength: 40,
   })
+
+  @hasMany(() => AiCvAnalyzer, {
+    localKey: 'userId',
+    foreignKey: 'userId',
+  })
+  declare aiCvAnalyzers: HasMany<typeof AiCvAnalyzer>
 }

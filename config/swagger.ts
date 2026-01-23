@@ -17,7 +17,7 @@ export default {
   snakeCase: true,
 
   debug: true, // set to true, to get some useful debug output
-  ignore: ["/swagger", "/docs", "/uploads/*"],
+  ignore: ["/swagger", "/docs", "/uploads/*", "/test*"],
   preferredPutPatch: "PUT", // if PUT/PATCH are provided for the same route, prefer PUT
   common: {
     parameters: {}, // OpenAPI conform parameters that are commonly used

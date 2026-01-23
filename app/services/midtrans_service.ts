@@ -1,0 +1,124 @@
+import midtransClient from 'midtrans-client'
+import env from '#start/env'
+import User from '#models/user'
+import logger from '@adonisjs/core/services/logger'
+import HttpException from '#exceptions/http_exception'
+
+export class MidtransService {
+
+  // define snap instance
+  private static snap = new midtransClient.Snap({
+    isProduction: env.get('MIDTRANS_IS_PRODUCTION') === 'true',
+    serverKey: env.get('MIDTRANS_SERVER_KEY', ''),
+    clientKey: env.get('MIDTRANS_CLIENT_KEY', ''),
+  })
+
+  // method to create order id
+  static createOrderId() {
+    const randOrderId = Math.floor(Math.random() * 1000000)
+    const orderId = `order-${randOrderId}-${Date.now()}`
+    return orderId
+  }
+
+  // method to create transaction
+  static async createTransaction(orderId: string, amount: number, customer: User) {
+    const parameter = {
+      transaction_details: {
+        order_id: orderId,
+        gross_amount: amount,
+      },
+      customer_details: {
+        first_name: customer.name,
+        last_name: customer.name,
+        email: customer.email,
+        phone: customer.phone,
+      },
+    }
+
+    logger.info(parameter)
+
+    return await this.snap.createTransaction(parameter)
+  }
+
+  // method to verify signature transaction
+  static async verifySignature(orderId: string, statusCode: string, grossAmount: string, signatureKey: string) {
+    const crypto = await import('crypto')
+    const serverKey = env.get('MIDTRANS_SERVER_KEY')
+    const checkSignature = crypto.createHash('sha512')
+      .update(orderId + statusCode + grossAmount + serverKey)
+      .digest('hex')
+
+    return checkSignature === signatureKey
+  }
+
+  // method to handle incoming payment callback
+  // static async handle(payload: {
+  //   order_id: string,
+  //   status_code: string,
+  //   gross_amount: string,
+  //   signature_key: string
+  // }) {
+  //   try {
+  //     const isValid = await MidtransService.verifySignature(payload.order_id, payload.status_code, payload.gross_amount, payload.signature_key);
+
+  //     // check if signature is valid
+  //     if (!isValid) throw new HttpException('Invalid signature', 400);
+
+  //     // check fraud status
+  //     // if (fraud_status != 'accept') return response.status(400).send(BaseMessage(false, "Payment rejected"));
+
+  //     // check if request from midtrans test url
+  //     if (payload.order_id.startsWith('payment_notif_test')) return {
+  //       status: 200,
+  //       message: "Callback processed"
+  //     }
+
+  //     // select transaction by order id
+  //     const transaction = (await Transaction.query().where('order_id', order_id).firstOrFail()).useTransaction(trx);
+  //     const booking = (await transaction.related('booking').query().firstOrFail()).useTransaction(trx);
+
+  //     // check payment status
+  //     switch (transaction_status) {
+  //       case 'settlement':
+  //         transaction.status = 'paid';
+  //         break;
+
+  //       case 'pending':
+  //         transaction.status = 'pending';
+  //         booking.status = 'scheduled';
+  //         break;
+
+  //       default:
+  //         transaction.status = 'failed';
+  //         break;
+  //     }
+
+  //     transaction.gatewayResponse = payload;
+
+  //     (await booking.save()).useTransaction(trx);
+  //     (await transaction.save()).useTransaction(trx);
+
+  //     logger.info("Payment success");
+
+  //     await trx.commit();
+
+  //     // Send notification to user
+  //     await PaymentCallback.dispatch({
+  //       order_id: order_id,
+  //       status_code: status_code,
+  //       gross_amount: gross_amount,
+  //       signature_key: signature_key,
+  //       user: transaction.user
+  //     })
+
+  //     return {
+  //       status: 200,
+  //       message: "Callback processed"
+  //     }
+  //   } catch (error) {
+  //     logger.error(error);
+  //     await trx.rollback();
+  //     throw new HttpException(error.message, error.status || 500);
+  //   }
+  // }
+}
