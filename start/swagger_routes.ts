@@ -7,5 +7,5 @@ router.get("/swagger", async () => {
 });
 
 router.get("/docs", async () => {
-  return AutoSwagger.default.ui("/swagger", swagger);
+  return AutoSwagger.default.scalar("/swagger");
 });

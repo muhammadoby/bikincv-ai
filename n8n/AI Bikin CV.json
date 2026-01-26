@@ -29,7 +29,7 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "=Role: Anda adalah seorang Senior HR Auditor dan Specialist Resume Reviewer.\nTugas: Lakukan audit mendalam terhadap data CV berikut. Anda harus membandingkan antara Markdown Version dan Raw Text untuk menentukan apakah sebuah kesalahan berasal dari sistem (Parsing Error) atau dari kandidat (CV Typo).\n\nLogika Audit:\nParsing Error: Jika di Markdown kata menempel (contoh: \"June2023\") tetapi di Raw Text kata tersebut terpisah dengan benar (\"June 2023\").\nCV Typo: Jika di kedua data (Markdown & Raw Text) kata tersebut memang salah tulis (contoh: \"Jule\" seharusnya \"July\" atau \"Smp\" seharusnya \"SMP\").\nDiksi & Profesionalisme: Berikan saran penggantian kalimat yang terlalu informal (contoh: \"Hello I am\") menjadi lebih profesional dan ramah ATS menggunakan action verbs.\nStandardisasi: Pastikan penulisan teknologi benar (contoh: \"Next JS\" menjadi \"Next.js\") dan akronim menggunakan huruf kapital (contoh: \"osis\" menjadi \"OSIS\", \"smk\" menjadi \"SMK\").\nResponse: Berikan gaya response yang dipilih kalau misal pilih yang professional maka berikan saran yang professional, jika yang dipilih adalah bahasa yang casual maka gunakan bahasa yang seperti GEN Z contoh (\"cv lu kurang di bagian ini nih\", \"lu\", \"gua\"), dan sesuaikan response menggunakan bahasa yang dipilih. Kalau misal kesalahan dari parser nya jangan ditampilkan hanya kasih saran dari yang benar-benar kesalahan dari si user. Dan jangan menggunakan kata / bahasa yang bisa mengekspos flow dari sistem seperti (\"Raw text\", \"Sistem Parsing\").\n\n\nData Input:\nSelected Language Style: {{ $json.body.language_style }}\nSelcted Language: {{ $json.body.cv_lang }}\nRaw Text (Source of Truth): {{ $json.body.raw_text }} \nStructured Markdown: {{ $json.body.markdown_version }}\n\nInstruksi Output (Hanya JSON, Tanpa Penjelasan):\nKembalikan respon dalam format JSON berikut:\n{\n\"suggestions\": [\n{\n\"section\": \"Nama Bagian (Header/Experience/dll)\",\n\"issue_type\": \"Parsing Error / CV Typo / Diction / Formatting\",\n\"original_phrase\": \"frasa asli yang bermasalah\",\n\"suggested_fix\": \"saran perbaikan\",\n\"reason\": \"Alasan perbaikan (buatkan saran kenapa harus diperbaiki dan berikan saran yang masuk akal)\"\n}\n],\n\"overall_hr_comment\": \"Komentar singkat mengenai kualitas profil kandidat berdasarkan gaya bahasa yang dipilih.\"\n}",
+        "text": "=Role: Anda adalah seorang Senior HR Specialist & Career Coach yang sangat detail namun tetap asik. Tugas Anda adalah mengaudit data CV berdasarkan ekstraksi teks.\n\nPANDUAN UTAMA:\n1. PERBANDINGAN DATA: Bandingkan \"Structured Markdown\" dengan \"Raw Text (Source of Truth)\". \n   - Jika di Markdown kata menempel (Contoh: \"June2023\") tapi di Raw Text benar (\"June 2023\"), abaikan itu sebagai kesalahan pengguna. Jangan masukkan ke dalam saran perbaikan karena itu kesalahan sistem.\n   - Jika kesalahan ada di KEDUA data (Contoh: \"osis\", \"smk\", \"jule\"), tandai sebagai kesalahan kandidat.\n2. GAYA BAHASA: \n   - Jika \"Selected Language Style\" adalah 'Casual/Gen Z', gunakan sapaan \"Kamu/Aku\", gunakan bahasa yang santai, sedikit slang Gen Z, namun tetap informatif.\n   - Jika 'Professional', gunakan bahasa baku yang sangat sopan.\n3. ROASTING: Pada bagian \"overallImpression.details\", berikan sedikit roastingan pedas namun membangun tentang CV mereka sesuai gaya bahasa yang dipilih.\n4. ATS & DIKSI: Berikan saran agar kata-kata informal (Contoh: \"Halo aku...\") diubah menjadi action verbs yang powerfull (Contoh: \"Pengembang web yang berfokus pada...\").\n5. KERAHASIAAN SISTEM: Jangan gunakan istilah \"Raw Text\", \"Markdown\", atau \"Parsing\". Seolah-olah Anda sedang melihat kertas CV asli mereka.\n\nDATA INPUT:\n- Selected Language Style: {{ $json.body.language_style }}\n- Selected Language: {{ $json.body.cv_lang }}\n- Raw Text: {{ $json.body.raw_text }} \n- Structured Markdown: {{ $json.body.markdown_version }}\n\nOUTPUT INSTRUCTION:\nBerikan respon HANYA dalam format JSON valid berikut:\n{\n  \"result\": {\n    \"overallImpression\": {\n      \"whyItsImportant\": \"Kenapa kesan pertama CV itu penting\",\n      \"actionPoints\": [\"poin saran 1\", \"poin saran 2\"],\n      \"score\": 0-100 (integer) akumulasi berdasarkan seluruh score,\n      \"details\": \"Analisis mendalam + roastingan sesuai gaya bahasa\"\n    },\n    \"contactInformation\": {\n      \"whyItsImportant\": \"...\",\n      \"actionPoints\": [],\n      \"score\": 0-100,\n      \"details\": \"...\"\n    },\n    \"relevantSkill\": {\n      \"whyItsImportant\": \"...\",\n      \"actionPoints\": [],\n      \"score\": 0-100,\n      \"details\": \"...\"\n    },\n    \"professionalSummary\": {\n      \"whyItsImportant\": \"...\",\n      \"actionPoints\": [],\n      \"score\": 0-100,\n      \"details\": \"...\"\n    },\n    \"workExperience\": {\n      \"whyItsImportant\": \"...\",\n      \"actionPoints\": [],\n      \"score\": 0-100,\n      \"details\": \"...\"\n    },\n    \"educationAndCertification\": {\n      \"whyItsImportant\": \"...\",\n      \"actionPoints\": [],\n      \"score\": 0-100,\n      \"details\": \"...\"\n    },\n    \"consistentAndErrorFreeWriting\": {\n      \"whyItsImportant\": \"Pentingnya typo-free\",\n      \"actionPoints\": [\"Saran perbaikan typo yang benar-benar ada di dokumen asli\"],\n      \"score\": 0-100,\n      \"details\": \"Evaluasi ketelitian tulisan\"\n    },\n    \"keywords\": {\n      \"jobTitles\": [],\n      \"skills\": [],\n      \"careerPaths\": []\n    },\n    \"experienceMatch\": \"Paragraf kesimpulan kecocokan\",\n    \"drinks\": [{\"name\": \"Nama Minuman (Contoh: Kopi Hitam/Matcha)\", \"score\": 1-5}],\n    \"ai_model\": \"model ai yang digunakan dan versionnya secara lengkap. Contoh: Gemini-aiversion\"\n  }\n}",
         "hasOutputParser": true,
         "options": {}
       },
@@ -83,7 +83,7 @@
       "parameters": {
         "content": "## Accept incoming request\nBikin CV AI Analyze",
         "height": 432,
-        "width": 544
+        "width": 560
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
@@ -102,7 +102,7 @@
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        592,
+        608,
         -80
       ],
       "typeVersion": 1,
@@ -128,7 +128,7 @@
         "respondWith": "json",
         "responseBody": "={\n\"error\": \"{{ $json.error }}\"\n}",
         "options": {
-          "responseCode": 500
+          "responseCode": 429
         }
       },
       "type": "n8n-nodes-base.respondToWebhook",
@@ -205,7 +205,7 @@
     "callerPolicy": "workflowsFromSameOwner",
     "timeSavedPerExecution": 10
   },
-  "versionId": "f65ae468-5429-4b50-b83b-813d8334c249",
+  "versionId": "5edfe14a-5563-4e1f-a46a-e02a50b2365c",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "59d6ef814e92dc5bf136b86ac01ceac7497643a11603d48e61bd0ec29f51a7c0"

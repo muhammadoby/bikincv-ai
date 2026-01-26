@@ -25,9 +25,9 @@ export default class PaymentsController {
 
         default:
           return response.status(400).send(BaseMessage(false, "Invalid payment method"))
-          break;
       }
 
+      return response.send(BaseMessage(true, "Payment callback handled successfully"))
 
     } catch (error) {
       return response.status(error.status || 500).send(BaseMessage(false, error.message))
