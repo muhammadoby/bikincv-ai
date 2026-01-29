@@ -1,29 +1,30 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import BaseMessage from '../utils/base_message.js'
 import { signInSchema } from '#validators/sign_in_validator'
-import User from '#models/user'
+import { inject } from '@adonisjs/core'
+import { AuthHandlerService } from '#services/auth_handler_service'
 
+@inject()
 export default class SigninsController {
+  constructor(private handler: AuthHandlerService) { }
   /**
    * @post
    * @summary Method to sign in user
    * @description Method to sign in user
-   * @requestBody <SignInSchema>
+   * @requestBody <signInSchema> - User credentials
    */
   async post({ request, response }: HttpContext) {
     const payload = await request.validateUsing(signInSchema)
+    const isMobile = request.header('x-client-type') === 'mobile' || request.input('client_type') === 'mobile'
 
     try {
-      const user = await User.verifyCredentials(payload.email, payload.password)
+      if (isMobile) {
+        const result = await this.handler.mobileHandler(payload)
+        return response.status(200).send(BaseMessage(true, "User logged in successfully", result))
+      }
 
-      const token = await User.accessTokens.create(user, ['*'], {
-        name: "Access token"
-      })
-
-      return response.status(200).send(BaseMessage(true, "User logged in successfully", {
-        user,
-        token: token
-      }))
+      const result = await this.handler.webHandler(payload)
+      return response.status(200).send(BaseMessage(true, "User logged in successfully", result))
 
     } catch (error) {
       return response.status(error.status || 500).send(BaseMessage(false, error.message))

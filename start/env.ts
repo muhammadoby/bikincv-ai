@@ -90,4 +90,18 @@ export default await Env.create(new URL('../', import.meta.url), {
   MIDTRANS_IS_PRODUCTION: Env.schema.string(),
   MIDTRANS_SERVER_KEY: Env.schema.string(),
   MIDTRANS_CLIENT_KEY: Env.schema.string(),
+
+  /*
+  |----------------------------------------------------------
+  | Variables for configuring the payment gateway
+  |----------------------------------------------------------
+  */
+  JWT_SECRET: Env.schema.string(),
+
+  /*
+  |----------------------------------------------------------
+  | Variables for configuring session package
+  |----------------------------------------------------------
+  */
+  SESSION_DRIVER: Env.schema.enum(['cookie', 'memory'] as const)
 })

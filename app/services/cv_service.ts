@@ -5,7 +5,11 @@ import HttpException from '#exceptions/http_exception'
 import { Infer } from '@vinejs/vine/types'
 import { CvAnalyzeSchema } from '#validators/cv_validator'
 
-; (global as any).DOMMatrix = DOMMatrix
+  ; import User from '#models/user'
+import nodemationApiConfig from '../api/nodemation_api.js'
+import logger from '@adonisjs/core/services/logger'
+import pricingEngine from '../utils/pricing_engine.js'
+(global as any).DOMMatrix = DOMMatrix
 
 function cleanPdfText(text: string): string {
   return text
@@ -94,7 +98,7 @@ function parseHeader(fullText: string, headerSection: string) {
   }
 }
 
-export class CvService {
+export class CvService extends pricingEngine {
   async summarize(payload: Infer<typeof CvAnalyzeSchema>) {
     try {
       if (!payload.cv_file.tmpPath) throw new HttpException('Invalid file upload', 400)
@@ -162,6 +166,63 @@ export class CvService {
         markdown_version: md.trim()
       }
     } catch (error: any) {
+      throw new HttpException(error.message, error.status || 500)
+    }
+  }
+
+  /**
+   * Method to analyze CV File
+   */
+  async analyzeCvFile(payload: Infer<typeof CvAnalyzeSchema>, user: User) {
+    try {
+      const result = await this.summarize(payload)
+
+      // send data to nodemation
+      const data = {
+        ...result,
+        cv_lang: payload.cv_lang,
+        language_style: payload.language_style
+      }
+
+      const n8nResponse = await nodemationApiConfig.post('/webhook/cv/analyze', data).then(res => res.data)
+
+      logger.info(n8nResponse)
+
+      const safeName = payload.cv_file.clientName
+        .toLowerCase()
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9-_]/g, '')
+
+      const generateCvName = `${safeName}-${Date.now()}.${payload.cv_file.extname}`
+
+
+      // move cv to storage
+      await payload.cv_file.moveToDisk(`/cv-analyzer/${generateCvName}`, 'fs')
+
+      // save ai response to db
+      const aiCvAnalyzer = await user.related('aiCvAnalyzers').create({
+        requestPayload: payload,
+        cvRawText: result.raw_text,
+        cvParsedJson: result.parsed_json,
+        cvMarkdown: result.markdown_version,
+        cvPath: `/cv-analyzer/${generateCvName}`,
+        aiResponse: Array.isArray(n8nResponse) ? n8nResponse[0] : n8nResponse,
+        aiModel: Array.isArray(n8nResponse) ? n8nResponse[0].result.ai_model : n8nResponse.result.ai_model,
+      })
+
+      let aiResponse = Array.isArray(n8nResponse) ? 'result' in n8nResponse[0] ? n8nResponse[0].result : n8nResponse[0] : n8nResponse
+
+      // create ai payments
+
+      return {
+        selected_language: payload.cv_lang,
+        language_style: payload.language_style,
+        ai_response: {
+          overallImpression: aiResponse.overallImpression,
+          contactInformation: aiResponse.contactInformation,
+        }
+      }
+    } catch (error) {
       throw new HttpException(error.message, error.status || 500)
     }
   }

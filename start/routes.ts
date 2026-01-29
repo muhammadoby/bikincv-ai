@@ -26,7 +26,6 @@ router.group(() => {
   router.get('/health', [HealthChecksController])
   router.post('/payment/callback/:payment_method', [PaymentsController, 'handle'])
 
-
   router.group(() => {
     router.post('/analyze', [CvsController, 'analyze']).middleware([
       middleware.auth({ guards: ['api'] })

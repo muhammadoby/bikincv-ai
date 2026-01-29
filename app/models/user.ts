@@ -100,10 +100,18 @@ export default class User extends compose(BaseModel, AuthFinder) {
   declare updatedAt: DateTime | null
 
   static accessTokens = DbAccessTokensProvider.forModel(User, {
-    expiresIn: '30 days',
+    expiresIn: '1 days',
     prefix: 'oat_',
     table: 'auth_access_tokens',
     type: 'auth_token',
+    tokenSecretLength: 40,
+  })
+
+  static refreshTokens = DbAccessTokensProvider.forModel(User, {
+    prefix: 'rt_',
+    table: 'jwt_refresh_tokens',
+    type: 'jwt_refresh_token',
+    expiresIn: '30 days',
     tokenSecretLength: 40,
   })
 

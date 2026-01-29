@@ -29,7 +29,7 @@ export default defineConfig({
     () => import('@adonisjs/core/commands'),
     () => import('@adonisjs/lucid/commands'),
     () => import('@adonisjs/mail/commands'),
-    // () => import('adonisjs-jobs/commands')
+    () => import('@adonisjs/session/commands')
   ],
 
   /*
@@ -57,7 +57,7 @@ export default defineConfig({
     () => import('@adonisjs/redis/redis_provider'),
     () => import('@adonisjs/drive/drive_provider'),
     () => import('@adonisjs/limiter/limiter_provider'),
-    // () => import('adonisjs-jobs/jobs_provider')
+    () => import('@adonisjs/session/session_provider')
   ],
 
   /*
