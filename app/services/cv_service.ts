@@ -3,12 +3,15 @@ import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs'
 import { DOMMatrix } from 'canvas'
 import HttpException from '#exceptions/http_exception'
 import { Infer } from '@vinejs/vine/types'
-import { CvAnalyzeSchema } from '#validators/cv_validator'
+import { CvAnalyzeSchema, CvPaymentSchema } from '#validators/cv_validator'
 
   ; import User from '#models/user'
 import nodemationApiConfig from '../api/nodemation_api.js'
 import logger from '@adonisjs/core/services/logger'
 import pricingEngine from '../utils/pricing_engine.js'
+import AiCvAnalyzer from '#models/ai_cv_analyzer'
+import { CvAnalysisResponse } from '../interfaces/cv_analysis_response_interface.js'
+import { GetBucketLoggingRequest$ } from '@aws-sdk/client-s3'
 (global as any).DOMMatrix = DOMMatrix
 
 function cleanPdfText(text: string): string {
@@ -186,8 +189,6 @@ export class CvService extends pricingEngine {
 
       const n8nResponse = await nodemationApiConfig.post('/webhook/cv/analyze', data).then(res => res.data)
 
-      logger.info(n8nResponse)
-
       const safeName = payload.cv_file.clientName
         .toLowerCase()
         .replace(/\s+/g, '-')
@@ -210,18 +211,100 @@ export class CvService extends pricingEngine {
         aiModel: Array.isArray(n8nResponse) ? n8nResponse[0].result.ai_model : n8nResponse.result.ai_model,
       })
 
-      let aiResponse = Array.isArray(n8nResponse) ? 'result' in n8nResponse[0] ? n8nResponse[0].result : n8nResponse[0] : n8nResponse
-
-      // create ai payments
+      // ai parsing
+      const aiResponse = aiCvAnalyzer.aiResponse as CvAnalysisResponse;
 
       return {
+        cvPath: aiCvAnalyzer.cvPath,
         selected_language: payload.cv_lang,
         language_style: payload.language_style,
-        ai_response: {
-          overallImpression: aiResponse.overallImpression,
-          contactInformation: aiResponse.contactInformation,
+        aiResponse: {
+          overallImpression: {
+            details: aiResponse.result.overallImpression.details,
+            score: null,
+            actionPoints: aiResponse.result.overallImpression.actionPoints,
+            whyItsImportant: aiResponse.result.overallImpression.whyItsImportant
+          },
+          contactInformation: aiResponse.result.contactInformation,
+          relevantSkill: aiResponse.result.relevantSkill,
         }
       }
+    } catch (error) {
+      throw new HttpException(error.message, error.status || 500)
+    }
+  }
+
+  /**
+   * Method to get CV Analysis history
+   */
+  async getCvAnalysisHistory(user: User): Promise<Array<{ id: number, cvPath: string }>> {
+    try {
+      const aiHistory = (await user.related('aiCvAnalyzers').query().select('id', 'cvPath').orderBy('created_at', 'desc')).map(record => {
+        return {
+          id: record.id,
+          cvPath: record.cvPath
+        }
+      })
+
+      return aiHistory;
+
+    } catch (error) {
+      throw new HttpException(error.message, error.status || 500)
+    }
+  }
+
+  /**
+   * Method to show CV History
+   */
+  async showCvHistory(user: User, historyId: number): Promise<AiCvAnalyzer | CvAnalysisResponse | {
+    cvPath: string;
+    aiResponse: {
+      overallImpression: any;
+      contactInformation: any;
+    };
+  }> {
+    try {
+      const aiCvAnalyzer = await user.related('aiCvAnalyzers').query().select('id', 'aiResponse', 'cvPath').where('id', historyId).firstOrFail();
+
+      const payment = await aiCvAnalyzer.related('payment').query().first()
+
+      // check if payment is paid
+      if (payment && payment.status === 'paid') {
+        return aiCvAnalyzer
+      }
+
+      // get ai response
+      const aiResponse = aiCvAnalyzer.aiResponse as CvAnalysisResponse;
+
+      return {
+        cvPath: aiCvAnalyzer.cvPath,
+        aiResponse: {
+          overallImpression: {
+            details: aiResponse.result.overallImpression.details,
+            score: null,
+            actionPoints: aiResponse.result.overallImpression.actionPoints,
+            whyItsImportant: aiResponse.result.overallImpression.whyItsImportant
+          },
+          contactInformation: aiResponse.result.contactInformation,
+          relevantSkill: aiResponse.result.relevantSkill,
+        }
+      }
+
+    } catch (error) {
+      throw new HttpException(error.message, error.status || 500)
+    }
+  }
+
+  async payForCvAnalysis(user: User, historyId: number, payload: Infer<typeof CvPaymentSchema>) {
+    try {
+      const aiCvAnalyzer = await user.related('aiCvAnalyzers').query().where('id', historyId).firstOrFail();
+
+
+      // TODO: Create payment and return payment gateway
+      const payment = await aiCvAnalyzer.related('payment').firstOrCreate({
+        paymentMethod: payload.payment_method,
+
+      })
     } catch (error) {
       throw new HttpException(error.message, error.status || 500)
     }

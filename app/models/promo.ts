@@ -33,6 +33,9 @@ export default class Promo extends BaseModel {
   declare discountType: "fixed" | "percentage"
 
   @column()
+  declare isAutoUse: boolean
+
+  @column()
   declare isActive: boolean
 
   @column.dateTime({ autoCreate: true })

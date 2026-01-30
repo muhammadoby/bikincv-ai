@@ -2,7 +2,6 @@ import midtransClient from 'midtrans-client'
 import env from '#start/env'
 import User from '#models/user'
 import logger from '@adonisjs/core/services/logger'
-import HttpException from '#exceptions/http_exception'
 
 export class MidtransService {
 

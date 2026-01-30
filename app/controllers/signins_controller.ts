@@ -18,7 +18,7 @@ export default class SigninsController {
     const isMobile = request.header('x-client-type') === 'mobile' || request.input('client_type') === 'mobile'
 
     try {
-      if (isMobile) {
+      if (!isMobile) {
         const result = await this.handler.mobileHandler(payload)
         return response.status(200).send(BaseMessage(true, "User logged in successfully", result))
       }

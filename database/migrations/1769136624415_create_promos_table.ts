@@ -15,6 +15,7 @@ export default class extends BaseSchema {
       table.date('end_date').nullable()
       table.decimal('discount_value', 10, 2).notNullable()
       table.enum('discount_type', ['percentage', 'amount']).notNullable()
+      table.boolean('is_auto_use').notNullable().defaultTo(false)
       table.boolean('is_active').notNullable().defaultTo(true)
 
       table.timestamp('created_at')

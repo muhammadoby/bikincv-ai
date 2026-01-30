@@ -27,11 +27,13 @@ router.group(() => {
   router.post('/payment/callback/:payment_method', [PaymentsController, 'handle'])
 
   router.group(() => {
-    router.post('/analyze', [CvsController, 'analyze']).middleware([
-      middleware.auth({ guards: ['api'] })
-    ])
+    router.post('/analyze', [CvsController, 'analyze'])
+    router.get('/history', [CvsController, 'history'])
+    router.get('/history/:id', [CvsController, 'show'])
+    router.post('/pay/:id', [CvsController, 'pay'])
   }).prefix('/ai/cv').middleware([
-    AiThottle
+    AiThottle,
+    middleware.auth({ guards: ['api'] })
   ])
 
   /**
