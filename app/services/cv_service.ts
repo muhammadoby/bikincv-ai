@@ -7,11 +7,9 @@ import { CvAnalyzeSchema, CvPaymentSchema } from '#validators/cv_validator'
 
   ; import User from '#models/user'
 import nodemationApiConfig from '../api/nodemation_api.js'
-import logger from '@adonisjs/core/services/logger'
 import pricingEngine from '../utils/pricing_engine.js'
 import AiCvAnalyzer from '#models/ai_cv_analyzer'
 import { CvAnalysisResponse } from '../interfaces/cv_analysis_response_interface.js'
-import { GetBucketLoggingRequest$ } from '@aws-sdk/client-s3'
 (global as any).DOMMatrix = DOMMatrix
 
 function cleanPdfText(text: string): string {
@@ -187,7 +185,7 @@ export class CvService extends pricingEngine {
         language_style: payload.language_style
       }
 
-      const n8nResponse = await nodemationApiConfig.post('/webhook/cv/analyze', data).then(res => res.data)
+      const n8nResponse = await nodemationApiConfig.post('/webhook-test/cv/analyze', data).then(res => res.data)
 
       const safeName = payload.cv_file.clientName
         .toLowerCase()
