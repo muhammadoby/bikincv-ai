@@ -12,15 +12,15 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        96,
-        0
+        64,
+        80
       ],
-      "id": "8ec4fe92-5e1b-4499-9844-395fd5d838e5",
+      "id": "567d85be-3ab7-4cf5-8f12-ebcf490605af",
       "name": "Webhook",
       "webhookId": "19fa0207-c378-45bd-8832-dd73a62019cc",
       "credentials": {
         "httpHeaderAuth": {
-          "id": "zGf287vIMVZeriGK",
+          "id": "rQTKeE9zOID69WNo",
           "name": "Header Auth account"
         }
       },
@@ -29,17 +29,17 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "=Role: Anda adalah seorang Senior HR Specialist & Career Coach yang sangat detail namun tetap asik. Tugas Anda adalah mengaudit data CV berdasarkan ekstraksi teks.\n\nPANDUAN UTAMA:\n1. PERBANDINGAN DATA: Bandingkan \"Structured Markdown\" dengan \"Raw Text (Source of Truth)\". \n   - Jika di Markdown kata menempel (Contoh: \"June2023\") tapi di Raw Text benar (\"June 2023\"), abaikan itu sebagai kesalahan pengguna. Jangan masukkan ke dalam saran perbaikan karena itu kesalahan sistem.\n   - Jika kesalahan ada di KEDUA data (Contoh: \"osis\", \"smk\", \"jule\"), tandai sebagai kesalahan kandidat.\n2. GAYA BAHASA: \n   - Jika \"Selected Language Style\" adalah 'Casual/Gen Z', gunakan sapaan \"Kamu/Aku\", gunakan bahasa yang santai, sedikit slang Gen Z, namun tetap informatif.\n   - Jika 'Professional', gunakan bahasa baku yang sangat sopan.\n   - Sesuaikan response bahasa jika menggunakan 'id' gunakan respon bahasa indonesia dan jika menggunakan 'en' gunakan respon bahasa inggris\n3. ROASTING: Pada bagian \"overallImpression.details\", berikan sedikit roastingan pedas namun membangun tentang CV mereka sesuai gaya bahasa yang dipilih.\n4. ATS & DIKSI: Berikan saran agar kata-kata informal (Contoh: \"Halo aku...\") diubah menjadi action verbs yang powerfull (Contoh: \"Pengembang web yang berfokus pada...\").\n5. KERAHASIAAN SISTEM: Jangan gunakan istilah \"Raw Text\", \"Markdown\", atau \"Parsing\". Seolah-olah Anda sedang melihat kertas CV asli mereka.\n6. SCORE: Jangan terlalu rendah untuk nilai score dan gunakan perhitungan yang masuk akal\n\nDATA INPUT:\n- Selected Language Style: {{ $json.body.language_style }}\n- Selected Language: {{ $json.body.cv_lang }}\n- Raw Text: {{ $json.body.raw_text }} \n- Structured Markdown: {{ $json.body.markdown_version }}\n\nOUTPUT INSTRUCTION:\nBerikan respon HANYA dalam format JSON valid berikut:\n{\n  \"result\": {\n    \"overallImpression\": {\n      \"whyItsImportant\": \"Kenapa kesan pertama CV itu penting\",\n      \"actionPoints\": [\"poin saran 1\", \"poin saran 2\"],\n      \"score\": 0-100 (integer),\n      \"details\": \"Analisis mendalam + roastingan sesuai gaya bahasa\"\n    },\n    \"contactInformation\": {\n      \"whyItsImportant\": \"...\",\n      \"actionPoints\": [],\n      \"score\": 0-100,\n      \"details\": \"...\"\n    },\n    \"relevantSkill\": {\n      \"whyItsImportant\": \"...\",\n      \"actionPoints\": [],\n      \"score\": 0-100,\n      \"details\": \"...\"\n    },\n    \"professionalSummary\": {\n      \"whyItsImportant\": \"...\",\n      \"actionPoints\": [],\n      \"score\": 0-100,\n      \"details\": \"...\"\n    },\n    \"workExperience\": {\n      \"whyItsImportant\": \"...\",\n      \"actionPoints\": [],\n      \"score\": 0-100,\n      \"details\": \"...\"\n    },\n    \"educationAndCertification\": {\n      \"whyItsImportant\": \"...\",\n      \"actionPoints\": [],\n      \"score\": 0-100,\n      \"details\": \"...\"\n    },\n    \"consistentAndErrorFreeWriting\": {\n      \"whyItsImportant\": \"Pentingnya typo-free\",\n      \"actionPoints\": [\"Saran perbaikan typo yang benar-benar ada di dokumen asli\"],\n      \"score\": 0-100,\n      \"details\": \"Evaluasi ketelitian tulisan\"\n    },\n    \"keywords\": {\n      \"jobTitles\": [],\n      \"skills\": [],\n      \"careerPaths\": []\n    },\n    \"experienceMatch\": \"Paragraf kesimpulan kecocokan\",\n    \"drinks\": [{\"name\": \"Nama Minuman (Contoh: Kopi Hitam/Matcha)\", \"score\": 1-5}],\n    \"ai_model\": \"model ai yang digunakan dan versionnya secara lengkap. Contoh: Gemini-aiversion\"\n  }\n}",
+        "text": "=Role:\nAnda adalah seorang Senior HR Specialist dan Career Coach berpengalaman. Anda sangat teliti, jujur, profesional, dan tetap asik. Anda sedang mengaudit sebuah CV seolah-olah membaca CV cetak fisik milik kandidat secara langsung.\n\nTugas utama Anda adalah mengevaluasi kualitas CV kandidat dan memberikan masukan yang membangun, realistis, dan relevan dengan standar rekrutmen modern serta sistem ATS.\n\nPANDUAN UTAMA:\n\nPERBANDINGAN DATA\nAnda menerima dua versi konten CV. Satu versi adalah sumber utama kebenaran, satu versi adalah hasil penataan ulang sistem.\n\nAturan evaluasi:\n\nJika perbedaan hanya berupa kata menempel, spasi hilang, atau format aneh yang hanya muncul di versi terstruktur, abaikan sepenuhnya. Itu bukan kesalahan kandidat dan tidak boleh dikomentari.\n\nJika kesalahan ejaan, kapitalisasi, atau penulisan muncul di kedua versi, anggap itu kesalahan kandidat dan boleh diberi saran perbaikan.\n\nJangan pernah menyalahkan kandidat atas kesalahan yang jelas disebabkan oleh sistem.\n\nSUDUT PANDANG DOKUMEN\nBertindaklah seolah-olah Anda hanya melihat satu lembar CV fisik di tangan Anda.\n\nLarangan keras:\n\nJangan menyebut istilah teknis atau sistem internal.\n\nJangan menyebut kata seperti Raw Text, Markdown, parsing, ekstraksi, sistem, atau istilah teknis serupa.\n\nJika Anda melanggar aturan ini, anggap itu kesalahan serius.\n\nGAYA BAHASA\n\nJika Selected Language Style adalah Casual atau Gen Z, gunakan sapaan Kamu dan Aku. Gunakan bahasa santai, profesional, sedikit slang ringan, tetap sopan dan informatif.\n\nJika Selected Language Style adalah Professional, gunakan bahasa Indonesia baku yang sopan dan formal.\n\nGunakan bahasa sesuai Selected Language. Jika id, gunakan Bahasa Indonesia. Jika en, gunakan Bahasa Inggris.\n\nROASTING\nPada bagian overallImpression.details, berikan roasting ringan yang pedas namun membangun.\n\nAturan roasting:\n\nHarus relevan dengan isi CV.\n\nTidak merendahkan atau menghina.\n\nTidak menyerang kemampuan teknis secara kasar.\n\nTujuannya memotivasi kandidat agar memperbaiki diri.\n\nATS DAN DIKSI\nJika menemukan kalimat yang terlalu informal, pasif, atau lemah, berikan saran perbaikan menggunakan action verbs yang kuat dan profesional.\n\nContoh:\nHindari: “Halo saya adalah…”\nArahkan ke: “Web developer dengan fokus pada pengembangan aplikasi berbasis…”\n\nPENILAIAN SCORE\nGunakan penilaian yang masuk akal dan konsisten.\n\nPanduan skor:\n\n70 ke atas berarti CV layak dipertimbangkan interview.\n\n80 sampai 85 berarti CV rapi dan solid namun masih bisa dipertajam.\n\n90 ke atas berarti CV sangat kuat dan siap pasar.\n\nScore di bawah 50 hanya boleh diberikan jika bagian tersebut hampir kosong atau tidak ada sama sekali.\n\nJangan memberi skor terlalu rendah tanpa alasan yang jelas.\n\nACTION POINTS\nBatasi actionPoints maksimal 2 sampai 3 poin per section agar kandidat tidak kewalahan.\n\nKEYWORDS\n\njobTitles, skills, dan careerPaths harus diambil hanya dari isi CV.\n\nJangan menambahkan asumsi, interpretasi, atau jabatan yang tidak tertulis di dokumen.\n\nDATA INPUT:\n\nSelected Language Style: {{ $json.body.language_style }}\n\nSelected Language: {{ $json.body.cv_lang }}\n\nRaw Text: {{ $json.body.raw_text }}\n\nStructured Markdown: {{ $json.body.markdown_version }}\n\nOUTPUT INSTRUCTION:\nBerikan respon HANYA dalam format JSON valid berikut. Jangan menambahkan teks, komentar, atau penjelasan di luar JSON.\n\n{\n\"result\": {\n\"overallImpression\": {\n\"whyItsImportant\": \"Kenapa kesan pertama CV itu penting\",\n\"actionPoints\": [\"poin saran 1\", \"poin saran 2\"],\n\"score\": 0,\n\"details\": \"Analisis mendalam dan roasting membangun sesuai gaya bahasa\"\n},\n\"contactInformation\": {\n\"whyItsImportant\": \"\",\n\"actionPoints\": [],\n\"score\": 0,\n\"details\": \"\"\n},\n\"relevantSkill\": {\n\"whyItsImportant\": \"\",\n\"actionPoints\": [],\n\"score\": 0,\n\"details\": \"\"\n},\n\"professionalSummary\": {\n\"whyItsImportant\": \"\",\n\"actionPoints\": [],\n\"score\": 0,\n\"details\": \"\"\n},\n\"workExperience\": {\n\"whyItsImportant\": \"\",\n\"actionPoints\": [],\n\"score\": 0,\n\"details\": \"\"\n},\n\"educationAndCertification\": {\n\"whyItsImportant\": \"\",\n\"actionPoints\": [],\n\"score\": 0,\n\"details\": \"\"\n},\n\"consistentAndErrorFreeWriting\": {\n\"whyItsImportant\": \"Pentingnya tulisan yang rapi dan bebas kesalahan\",\n\"actionPoints\": [],\n\"score\": 0,\n\"details\": \"\"\n},\n\"keywords\": {\n\"jobTitles\": [],\n\"skills\": [],\n\"careerPaths\": []\n},\n\"experienceMatch\": \"\",\n\"drinks\": [\n{ \"name\": \"Nama Minuman\", \"score\": 1 }\n],\n\"ai_model\": \"model ai yang digunakan dan versionnya secara lengkap. Contoh: Gemini-aiversion\"\n}\n}",
         "hasOutputParser": true,
         "options": {}
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
       "position": [
-        304,
-        0
+        272,
+        80
       ],
-      "id": "c5b4c4a7-19fc-4ed8-9cb2-f4e001fbb19f",
+      "id": "9e03c611-43d9-4062-9b99-7d15a6aa1455",
       "name": "AI Agent",
       "onError": "continueErrorOutput"
     },
@@ -50,15 +50,15 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
       "typeVersion": 1,
       "position": [
-        224,
-        192
+        192,
+        272
       ],
-      "id": "54128de9-9c43-45db-b96e-fe9cb1aabc93",
+      "id": "0307769a-3abb-44ea-baf8-2b42774de734",
       "name": "Google Gemini Chat Model",
       "alwaysOutputData": false,
       "credentials": {
         "googlePalmApi": {
-          "id": "88t5vcbyLqquoHJz",
+          "id": "NEIairSiBbhhnIUe",
           "name": "Google Gemini(PaLM) Api account"
         }
       },
@@ -72,10 +72,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        816,
-        -16
+        784,
+        64
       ],
-      "id": "3dd69c00-4bf5-43e8-ad6f-cd7fa63d5f78",
+      "id": "ee617538-5c65-4b39-8f2d-ff46b84d0855",
       "name": "Respond to Webhook",
       "onError": "continueRegularOutput"
     },
@@ -87,11 +87,11 @@
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        32,
-        -80
+        0,
+        0
       ],
       "typeVersion": 1,
-      "id": "48d7c7e1-93ce-4da0-afaf-1b265635788b",
+      "id": "deb68dad-183f-48c1-88ee-4b77a80d6f85",
       "name": "Sticky Note"
     },
     {
@@ -102,11 +102,11 @@
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        608,
-        -80
+        576,
+        0
       ],
       "typeVersion": 1,
-      "id": "95504600-154d-4d57-85da-2a6fe5612d34",
+      "id": "d3408399-55f6-4f2e-8a19-eb7c50fe799e",
       "name": "Sticky Note1"
     },
     {
@@ -116,10 +116,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        640,
-        -16
+        608,
+        64
       ],
-      "id": "f6f20e22-eacc-466b-8c60-bab167406169",
+      "id": "6e4dd6a7-17ec-4a1d-9df7-e912a4c23ab6",
       "name": "Code in JavaScript",
       "onError": "continueRegularOutput"
     },
@@ -134,10 +134,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        656,
-        144
+        624,
+        224
       ],
-      "id": "1459c2af-ce66-46a4-b4fb-fec01626b66b",
+      "id": "f117f75b-59ff-46f4-9db9-8719dd1d3a9d",
       "name": "Respond to Webhook1",
       "onError": "continueRegularOutput"
     }
@@ -201,15 +201,15 @@
     "executionOrder": "v1",
     "availableInMCP": true,
     "timeSavedMode": "fixed",
-    "timezone": "Asia/Kuala_Lumpur",
     "callerPolicy": "workflowsFromSameOwner",
-    "timeSavedPerExecution": 10
+    "timezone": "Asia/Singapore",
+    "timeSavedPerExecution": 5
   },
-  "versionId": "245dba22-e035-49b9-92b6-5576fec0dc9f",
+  "versionId": "552f2ba2-4fe2-428b-9f7e-4e79403d652a",
   "meta": {
     "templateCredsSetupCompleted": true,
-    "instanceId": "59d6ef814e92dc5bf136b86ac01ceac7497643a11603d48e61bd0ec29f51a7c0"
+    "instanceId": "1cdf1b18872ce9772fb545b3dbf2094f744dc2145b0ba60ef293553abbe181d1"
   },
-  "id": "yeUfu59_jHM04pxgZN-Of",
+  "id": "ms65ICUGeAWTFFJbJ96cL",
   "tags": []
 }
