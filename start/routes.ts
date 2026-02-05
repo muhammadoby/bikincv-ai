@@ -40,4 +40,7 @@ router.group(() => {
    * Auth routes
    */
   router.post('signin', [SigninsController, 'post'])
+  router.post('logout', [SigninsController, 'logout']).middleware([
+    middleware.auth({ guards: ['api'] })
+  ])
 }).prefix('/api')

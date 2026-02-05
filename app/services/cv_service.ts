@@ -7,9 +7,16 @@ import { CvAnalyzeSchema, CvPaymentSchema } from '#validators/cv_validator'
 
   ; import User from '#models/user'
 import nodemationApiConfig from '../api/nodemation_api.js'
+import logger from '@adonisjs/core/services/logger'
 import pricingEngine from '../utils/pricing_engine.js'
 import AiCvAnalyzer from '#models/ai_cv_analyzer'
 import { CvAnalysisResponse } from '../interfaces/cv_analysis_response_interface.js'
+import { GetBucketLoggingRequest$ } from '@aws-sdk/client-s3'
+import AiPricing from '#models/ai_pricing'
+import Promo from '#models/promo'
+import { MidtransService } from './midtrans_service.js'
+import PaymentGateway from '#models/payment_gateway'
+import { DateTime } from 'luxon'
 (global as any).DOMMatrix = DOMMatrix
 
 function cleanPdfText(text: string): string {
@@ -185,7 +192,7 @@ export class CvService extends pricingEngine {
         language_style: payload.language_style
       }
 
-      const n8nResponse = await nodemationApiConfig.post('/webhook-test/cv/analyze', data).then(res => res.data)
+      const n8nResponse = await nodemationApiConfig.post('/webhook/cv/analyze', data).then(res => res.data)
 
       const safeName = payload.cv_file.clientName
         .toLowerCase()
@@ -293,16 +300,82 @@ export class CvService extends pricingEngine {
     }
   }
 
+  /**
+   * Method to handle payment for AI CV Reviewers
+   */
   async payForCvAnalysis(user: User, historyId: number, payload: Infer<typeof CvPaymentSchema>) {
     try {
-      const aiCvAnalyzer = await user.related('aiCvAnalyzers').query().where('id', historyId).firstOrFail();
 
+      // declare variable
+      let finalPrice: number = 0;
+      let totalAmount: number = 0;
+      let promoId: number | null = null;
+
+      const aiCvAnalyzer = await user.related('aiCvAnalyzers').query().where('id', historyId).firstOrFail();
+      const aiPayment = await aiCvAnalyzer.related('payment').query().first();
+
+      // check if cv is already paid
+      if (aiPayment && aiPayment.status === 'paid') throw new HttpException('CV Analysis already paid', 400)
+
+      // calculate the price
+      const aiPrice = await AiPricing.query().first();
+      if (!aiPrice) throw new HttpException('AI Pricing not found', 500)
+
+      finalPrice = aiPrice.price
+      totalAmount = aiPrice.price
+
+      // check if the ai price have discount
+      if (aiPrice.discount && aiPrice.discountType) {
+        switch (aiPrice.discountType) {
+          case 'percentage':
+            finalPrice = finalPrice - (finalPrice * aiPrice.discount / 100);
+            break;
+          case 'fixed':
+            finalPrice = finalPrice - aiPrice.discount;
+            break;
+
+          default:
+            finalPrice = finalPrice;
+            break;
+        }
+      }
+
+      // check if the user used promo code
+      if (payload.promo_code) {
+        const promo = await Promo.query().where('code', payload.promo_code).first();
+        if (!promo) throw new HttpException('Invalid promo code', 400)
+
+        promoId = promo.id;
+
+        // calculate the final price with promo
+        finalPrice = this.calculatePromo(finalPrice, promo);
+      }
 
       // TODO: Create payment and return payment gateway
-      const payment = await aiCvAnalyzer.related('payment').firstOrCreate({
-        paymentMethod: payload.payment_method,
+      // create midtrans payment gateway
+      const orderId = MidtransService.createOrderId();
+      const midtrans = await MidtransService.createTransaction(
+        orderId,
+        finalPrice,
+        user
+      )
 
+      // save payment to database
+      await aiCvAnalyzer.related('payment').firstOrCreate({
+        paymentMethod: payload.payment_method,
+        totalAmount: totalAmount,
+        promoId: promoId,
+        orderId: orderId,
+        totalPaid: finalPrice,
+        status: 'pending',
+        gatewayToken: midtrans.token,
+        expiresAt: DateTime.now().plus({ days: 1 }).toFormat('yyyy-MM-dd HH:mm:ss')
       })
+
+      return {
+        PaymentGateway: midtrans,
+        selectedPayment: payload.payment_method
+      }
     } catch (error) {
       throw new HttpException(error.message, error.status || 500)
     }

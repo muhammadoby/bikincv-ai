@@ -69,6 +69,7 @@ export default class CvsController {
    * @pay
    * @summary Method to pay for CV Analysis
    * @description Method to pay for CV Analysis
+   * @requestBody <CvPaymentSchema> - Payment details
    */
   async pay({ params, response, request, auth }: HttpContext) {
     const { id } = params;
@@ -78,7 +79,7 @@ export default class CvsController {
 
       const payment = await this.service.payForCvAnalysis(user, Number(id), payload);
 
-      return response.status(200).send(BaseMessage(true, "Payment processed", payment))
+      return response.status(200).send(BaseMessage(true, "Payment generated successfully", payment))
     } catch (error) {
       return response.status(error.status || 500).send(BaseMessage(false, error.message || "Something went wrong"));
     }

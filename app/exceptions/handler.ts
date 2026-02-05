@@ -28,6 +28,9 @@ export default class HttpExceptionHandler extends ExceptionHandler {
     if (error instanceof driveErrors.CannotServeFileException) return ctx.response.status(404).send(BaseMessage(false, "File not found"))
 
     logger.error(error instanceof Error ? error.stack || error.message : String(error))
+
+    if (this.debug) return super.handle(error, ctx)
+
     return ctx.response.status(500).send(BaseMessage(false, error instanceof Error ? error.message : String(error)))
     // return super.handle(error, ctx)
   }

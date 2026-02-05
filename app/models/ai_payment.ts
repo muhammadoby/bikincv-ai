@@ -20,7 +20,7 @@ export default class AiPayment extends BaseModel {
   declare promoId?: number | null
 
   @column()
-  declare orderId: number
+  declare orderId: string
 
   @column()
   declare totalPaid: number

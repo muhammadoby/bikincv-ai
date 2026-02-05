@@ -30,4 +30,21 @@ export default class SigninsController {
       return response.status(error.status || 500).send(BaseMessage(false, error.message))
     }
   }
+
+  /**
+   * @logout
+   * @summary Method to logout user
+   * @description Method to logout user
+   */
+  async logout({ auth, response }: HttpContext) {
+    try {
+      const user = auth.getUserOrFail();
+
+      await this.handler.logout(user);
+
+      return response.status(200).send(BaseMessage(true, "User logged out successfully"))
+    } catch (error) {
+      return response.status(error.status || 500).send(BaseMessage(false, error.message))
+    }
+  }
 }
