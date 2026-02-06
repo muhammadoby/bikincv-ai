@@ -92,6 +92,9 @@ function parseHeader(fullText: string, headerSection: string) {
   }
 }
 
+/**
+ * CV Helper Class
+ */
 export default class CvHelper extends pricingEngine {
   async summarize(payload: Infer<typeof CvAnalyzeSchema>) {
     try {

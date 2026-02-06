@@ -1,5 +1,7 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import BaseMessage from '../utils/base_message.js'
+import { MidtransService } from '#services/midtrans_service'
+import logger from '@adonisjs/core/services/logger'
 
 export default class PaymentsController {
   /**
@@ -9,14 +11,31 @@ export default class PaymentsController {
    */
   async handle({ request, response, params }: HttpContext) {
     const { payment_method } = params
-    const payload = request.all()
+    const {
+      order_id,
+      status_code,
+      transaction_status,
+      gross_amount,
+      signature_key,
+      payment_type
+    } = request.all()
+
+    logger.info(request.all());
 
     try {
 
       // check the payment method
       switch (payment_method) {
         case "midtrans":
-
+          await MidtransService.handle({
+            order_id,
+            transaction_status,
+            status_code,
+            gross_amount,
+            signature_key,
+            payment_type,
+            gateway_response: request.all()
+          })
           break;
 
         case "xendit":

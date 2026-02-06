@@ -42,15 +42,4 @@ export class AuthHandlerService {
       throw new HttpException(error.message || "Something went wrong", error.status || 500)
     }
   }
-
-  /**
-   * Method to handle logout logic
-   */
-  async logout(user: User) {
-    try {
-
-    } catch (error) {
-      throw new HttpException(error.message || "Something went wrong", error.status || 500)
-    }
-  }
 }

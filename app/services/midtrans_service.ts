@@ -2,6 +2,9 @@ import midtransClient from 'midtrans-client'
 import env from '#start/env'
 import User from '#models/user'
 import logger from '@adonisjs/core/services/logger'
+import HttpException from '#exceptions/http_exception'
+import AiPayment from '#models/ai_payment'
+import db from '@adonisjs/lucid/services/db'
 
 export class MidtransService {
 
@@ -28,7 +31,7 @@ export class MidtransService {
       },
       customer_details: {
         first_name: customer.name,
-        last_name: customer.name,
+        last_name: '',
         email: customer.email,
         phone: customer.phone,
       },
@@ -51,73 +54,66 @@ export class MidtransService {
   }
 
   // method to handle incoming payment callback
-  // static async handle(payload: {
-  //   order_id: string,
-  //   status_code: string,
-  //   gross_amount: string,
-  //   signature_key: string
-  // }) {
-  //   try {
-  //     const isValid = await MidtransService.verifySignature(payload.order_id, payload.status_code, payload.gross_amount, payload.signature_key);
+  static async handle(payload: {
+    order_id: string,
+    transaction_status: string,
+    status_code: string,
+    gross_amount: string,
+    signature_key: string,
+    payment_type?: string | null,
+    gateway_response?: object | null
+  }) {
+    const trx= await db.transaction();
+    try {
+      const isValid = await MidtransService.verifySignature(payload.order_id, payload.status_code, payload.gross_amount, payload.signature_key);
 
-  //     // check if signature is valid
-  //     if (!isValid) throw new HttpException('Invalid signature', 400);
+      // check if signature is valid
+      if (!isValid) throw new HttpException('Invalid signature', 400);
 
-  //     // check fraud status
-  //     // if (fraud_status != 'accept') return response.status(400).send(BaseMessage(false, "Payment rejected"));
+      // check fraud status
+      // if (fraud_status != 'accept') return response.status(400).send(BaseMessage(false, "Payment rejected"));
 
-  //     // check if request from midtrans test url
-  //     if (payload.order_id.startsWith('payment_notif_test')) return {
-  //       status: 200,
-  //       message: "Callback processed"
-  //     }
+      // check if request from midtrans test url
+      if (payload.order_id.startsWith('payment_notif_test')) return {
+        status: 200,
+        message: "Callback processed"
+      }
 
-  //     // select transaction by order id
-  //     const transaction = (await Transaction.query().where('order_id', order_id).firstOrFail()).useTransaction(trx);
-  //     const booking = (await transaction.related('booking').query().firstOrFail()).useTransaction(trx);
+      // select transaction by order id
+      const transaction = (await AiPayment.query().where('order_id', payload.order_id).firstOrFail()).useTransaction(trx);
 
-  //     // check payment status
-  //     switch (transaction_status) {
-  //       case 'settlement':
-  //         transaction.status = 'paid';
-  //         break;
+      // check payment status
+      switch (payload.transaction_status) {
+        case 'settlement':
+          transaction.status = 'paid';
+          break;
 
-  //       case 'pending':
-  //         transaction.status = 'pending';
-  //         booking.status = 'scheduled';
-  //         break;
+        case 'pending':
+          transaction.status = 'pending';
+          break;
 
-  //       default:
-  //         transaction.status = 'failed';
-  //         break;
-  //     }
+        default:
+          transaction.status = 'failed';
+          break;
+      }
 
-  //     transaction.gatewayResponse = payload;
+      transaction.gatewayResponse = payload.gateway_response;
+      transaction.channel = payload.payment_type ? payload.payment_type : null;
 
-  //     (await booking.save()).useTransaction(trx);
-  //     (await transaction.save()).useTransaction(trx);
+      (await transaction.save()).useTransaction(trx);
 
-  //     logger.info("Payment success");
+      logger.info("Payment success");
 
-  //     await trx.commit();
+      await trx.commit();
 
-  //     // Send notification to user
-  //     await PaymentCallback.dispatch({
-  //       order_id: order_id,
-  //       status_code: status_code,
-  //       gross_amount: gross_amount,
-  //       signature_key: signature_key,
-  //       user: transaction.user
-  //     })
-
-  //     return {
-  //       status: 200,
-  //       message: "Callback processed"
-  //     }
-  //   } catch (error) {
-  //     logger.error(error);
-  //     await trx.rollback();
-  //     throw new HttpException(error.message, error.status || 500);
-  //   }
-  // }
+      return {
+        status: 200,
+        message: "Callback processed"
+      }
+    } catch (error) {
+      logger.error(error);
+      await trx.rollback();
+      throw new HttpException(error.message, error.status || 500);
+    }
+  }
 }

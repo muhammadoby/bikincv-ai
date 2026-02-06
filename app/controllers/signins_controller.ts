@@ -3,6 +3,8 @@ import BaseMessage from '../utils/base_message.js'
 import { signInSchema } from '#validators/sign_in_validator'
 import { inject } from '@adonisjs/core'
 import { AuthHandlerService } from '#services/auth_handler_service'
+import User from '#models/user'
+import HttpException from '#exceptions/http_exception'
 
 @inject()
 export default class SigninsController {
@@ -38,10 +40,12 @@ export default class SigninsController {
    */
   async logout({ auth, response }: HttpContext) {
     try {
-      const user = auth.getUserOrFail();
-
-      await this.handler.logout(user);
-
+      const user = auth.getUserOrFail()
+      const token = auth.use('api').user?.currentAccessToken?.identifier
+      if (!token) {
+        throw new HttpException('No access token found', 400)
+      }
+      await User.accessTokens.delete(user, token)
       return response.status(200).send(BaseMessage(true, "User logged out successfully"))
     } catch (error) {
       return response.status(error.status || 500).send(BaseMessage(false, error.message))

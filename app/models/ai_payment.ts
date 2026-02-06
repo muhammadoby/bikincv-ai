@@ -28,8 +28,18 @@ export default class AiPayment extends BaseModel {
   @column()
   declare status: "pending" | "paid" | "failed" | "expired"
 
-  @column()
-  declare gatewayResponse?: object | null
+  @column({
+    prepare: (value) => {
+      if (!value) return null
+      return JSON.stringify(value)
+    },
+    consume: (value) => {
+      if (!value) return null
+      if (typeof value === 'object') return value
+      return JSON.parse(value)
+    },
+  })
+  declare gatewayResponse?: any
 
   @column()
   declare channel?: string | null;

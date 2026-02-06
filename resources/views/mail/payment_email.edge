@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="x-apple-disable-message-reformatting">
+    <title>Selesaikan pembayaran</title>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f1f1f1;
+        }
+
+        table {
+            border-collapse: collapse;
+        }
+
+        img {
+            display: block;
+            border: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <center style="width:100%; background:#f1f1f1;">
+        <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+                <td align="center">
+                    <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;">
+
+                        <!-- Header -->
+                        <tr>
+                            <td align="center" style="padding:20px;">
+                                <img src="https://www.bikincv.com/images/brand-logo.png" width="200" alt="bikincv.com">
+                            </td>
+                        </tr>
+
+                        <!-- Content -->
+                        <tr>
+                            <td style="padding:40px; font-family:Arial, sans-serif; font-size:14px; color:#555;">
+                                Halo <strong>{{ user.name }}</strong><br><br>
+
+                                Analisis CV kamu sudah siap.<br>
+                                Lakukan pembayaran untuk membuka fitur AI Analyzer dan melihat skor CV kamu.<br><br>
+
+                                <strong>Detail Unlock</strong><br><br>
+
+                                <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #ddd;">
+                                    <tr>
+                                        <th align="left" style="padding:8px; border:1px solid #ddd;">Fitur</th>
+                                        <th align="left" style="padding:8px; border:1px solid #ddd;">Keterangan</th>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding:8px; border:1px solid #ddd;">AI CV Analyzer</td>
+                                        <td style="padding:8px; border:1px solid #ddd;">
+                                            Skor CV, evaluasi ATS, dan rekomendasi perbaikan
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td align="right" style="padding:8px; font-weight:bold;">
+                                            Total
+                                        </td>
+                                        <td style="padding:8px; border:1px solid #ddd; font-weight:bold;">
+                                            {{totalPaid}}
+                                        </td>
+                                    </tr>
+                                </table>
+
+                                <br>                              
+                                Setelah melakukan pembayaran, masuk ke riwayat cv kamu.
+                                <a href="https://www.bikincv.com/login">https://www.bikincv.com/login</a><br>
+                                Skor dan hasil analisis akan langsung terbuka setelah pembayaran.<br><br>
+                            </td>
+                        </tr>
+
+                        <!-- Footer -->
+                        <tr>
+                            <td align="center" style="padding:30px; font-size:12px; color:#888; font-family:Arial;">
+                                © 2025 PT BIKIN INOVASI TEKNOLOGI<br>
+                                Jalan Sulatri 168x, Denpasar, Bali<br>
+                                <a href="https://www.bikincv.com">www.bikincv.com</a>
+                            </td>
+                        </tr>
+
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </center>
+</body>
+
+</html>

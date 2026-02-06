@@ -5,7 +5,7 @@ import { BaseModel, column, hasMany } from '@adonisjs/lucid/orm'
 import { withAuthFinder } from '@adonisjs/auth/mixins/lucid'
 import { DbAccessTokensProvider } from '@adonisjs/auth/access_tokens'
 import AiCvAnalyzer from './ai_cv_analyzer.js'
-import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
+import type {HasMany } from '@adonisjs/lucid/types/relations'
 
 const AuthFinder = withAuthFinder(() => hash.use('bcrypt'), {
   uids: ['email'],
