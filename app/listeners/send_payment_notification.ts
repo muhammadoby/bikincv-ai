@@ -20,6 +20,8 @@ export default class SendPaymentNotification {
                     .htmlView('mail/payment_email', {
                         user: data.user,
                         orderNumber: data.orderId,
+                        paymentLink: data.paymentLink,
+                        expiredTime: data.expiredTime,
                         totalPaid: StringHelpers.formatCurrency(data.totalPaid)
                     })
             })

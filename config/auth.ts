@@ -29,7 +29,7 @@ const authConfig = defineConfig({
     }),
 
     jwt: jwtGuard({
-      tokenName: 'custom-name',
+      tokenName: 'jwt',
       tokenExpiresIn: '1h',
       useCookies: true,
       secret: env.get('JWT_SECRET'),

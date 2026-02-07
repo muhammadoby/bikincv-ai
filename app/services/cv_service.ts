@@ -71,7 +71,7 @@ export class CvService extends CvHelper {
           relevantSkill: aiResponse.result.relevantSkill,
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       throw new HttpException(error.message, error.status || 500)
     }
   }
@@ -90,7 +90,7 @@ export class CvService extends CvHelper {
 
       return aiHistory;
 
-    } catch (error) {
+    } catch (error: any) {
       throw new HttpException(error.message, error.status || 500)
     }
   }
@@ -132,7 +132,7 @@ export class CvService extends CvHelper {
         },
       }
 
-    } catch (error) {
+    } catch (error: any) {
       throw new HttpException(error.message, error.status || 500)
     }
   }
@@ -234,6 +234,8 @@ export class CvService extends CvHelper {
       CreatePayment.dispatch({
         user: user,
         orderId: orderId,
+        expiredTime: paymentExpiredAt.toFormat('yyyy-MM-dd HH:mm:ss'),
+        paymentLink: midtrans.redirect_url,
         totalPaid: finalPrice
       })
 
@@ -244,7 +246,7 @@ export class CvService extends CvHelper {
         },
         selected_payment: payload.payment_method
       }
-    } catch (error) {
+    } catch (error: any) {
       throw new HttpException(error.message, error.status || 500)
     }
   }

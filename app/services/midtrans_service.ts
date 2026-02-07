@@ -5,6 +5,7 @@ import logger from '@adonisjs/core/services/logger'
 import HttpException from '#exceptions/http_exception'
 import AiPayment from '#models/ai_payment'
 import db from '@adonisjs/lucid/services/db'
+import PaymentSuccess from '#events/payment_success'
 
 export class MidtransService {
 
@@ -18,7 +19,7 @@ export class MidtransService {
   // method to create order id
   static createOrderId() {
     const randOrderId = Math.floor(Math.random() * 1000000)
-    const orderId = `order-${randOrderId}-${Date.now()}`
+    const orderId = `${randOrderId}${Date.now().toString().slice(0, 4)}`
     return orderId
   }
 
@@ -36,8 +37,6 @@ export class MidtransService {
         phone: customer.phone,
       },
     }
-
-    logger.info(parameter)
 
     return await this.snap.createTransaction(parameter)
   }
@@ -63,7 +62,7 @@ export class MidtransService {
     payment_type?: string | null,
     gateway_response?: object | null
   }) {
-    const trx= await db.transaction();
+    const trx = await db.transaction();
     try {
       const isValid = await MidtransService.verifySignature(payload.order_id, payload.status_code, payload.gross_amount, payload.signature_key);
 
@@ -81,6 +80,10 @@ export class MidtransService {
 
       // select transaction by order id
       const transaction = (await AiPayment.query().where('order_id', payload.order_id).firstOrFail()).useTransaction(trx);
+
+      transaction.load('aiCvAnalyzer', (query) => {
+        query.preload('user')
+      })
 
       // check payment status
       switch (payload.transaction_status) {
@@ -106,11 +109,18 @@ export class MidtransService {
 
       await trx.commit();
 
+
+      // send email notification
+      PaymentSuccess.dispatch({
+        orderNumber: payload.order_id,
+        user: transaction.aiCvAnalyzer.user
+      })
+
       return {
         status: 200,
         message: "Callback processed"
       }
-    } catch (error) {
+    } catch (error: any) {
       logger.error(error);
       await trx.rollback();
       throw new HttpException(error.message, error.status || 500);

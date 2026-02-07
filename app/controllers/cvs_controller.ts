@@ -25,7 +25,7 @@ export default class CvsController {
       const result = await this.service.analyzeCvFile(payload, user)
 
       return response.status(200).send(BaseMessage(true, "Cv analyzed successfully", result))
-    } catch (error) {
+    } catch (error: any) {
       logger.error(error);
       return response.status(error.status || 500).send(BaseMessage(false, error.message))
     }
@@ -44,7 +44,7 @@ export default class CvsController {
       const history = await this.service.getCvAnalysisHistory(user);
 
       return response.status(200).send(BaseMessage(true, "Cv analysis history fetched successfully", history))
-    } catch (error) {
+    } catch (error: any) {
       return response.status(error.status || 500).send(BaseMessage(false, error.message || "Something went wrong"))
     }
   }
@@ -60,7 +60,7 @@ export default class CvsController {
       const aiCvAnalyzer = await this.service.showCvHistory(user, params.id);
 
       return response.status(200).send(BaseMessage(true, "Cv analysis details fetched successfully", aiCvAnalyzer))
-    } catch (error) {
+    } catch (error: any) {
       return response.status(error.status || 500).send(BaseMessage(false, error.message || "Something went wrong"))
     }
   }
@@ -80,7 +80,7 @@ export default class CvsController {
       const payment = await this.service.payForCvAnalysis(user, Number(id), payload);
 
       return response.status(200).send(BaseMessage(true, "Payment generated successfully", payment))
-    } catch (error) {
+    } catch (error: any) {
       return response.status(error.status || 500).send(BaseMessage(false, error.message || "Something went wrong"));
     }
   }

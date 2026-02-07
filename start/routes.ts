@@ -17,17 +17,6 @@ const HealthChecksController = () => import('#controllers/health_checks_controll
 const CvsController = () => import('#controllers/cvs_controller')
 const PaymentsController = () => import('#controllers/payments_controller')
 const SigninsController = () => import('#controllers/signins_controller')
-import { HttpContext } from '@adonisjs/core/http'
-import User from '#models/user'
-import StringHelpers from '../app/helpers/string_helpers.js'
-
-router.get('mail', async ({view}: HttpContext) => {
-  return view.render('mail/payment_success', {
-    user: await User.first(),
-    orderNumber: "123456",
-    totalPaid: StringHelpers.formatCurrency(29000)
-  })
-})
 
 /**
  * Api Routes

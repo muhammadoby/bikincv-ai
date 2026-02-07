@@ -20,8 +20,6 @@ export default class PaymentsController {
       payment_type
     } = request.all()
 
-    logger.info(request.all());
-
     try {
 
       // check the payment method
@@ -48,7 +46,7 @@ export default class PaymentsController {
 
       return response.send(BaseMessage(true, "Payment callback handled successfully"))
 
-    } catch (error) {
+    } catch (error: any) {
       return response.status(error.status || 500).send(BaseMessage(false, error.message))
     }
   }

@@ -28,7 +28,7 @@ export default class SigninsController {
       const result = await this.handler.webHandler(payload)
       return response.status(200).send(BaseMessage(true, "User logged in successfully", result))
 
-    } catch (error) {
+    } catch (error: any) {
       return response.status(error.status || 500).send(BaseMessage(false, error.message))
     }
   }
@@ -47,7 +47,7 @@ export default class SigninsController {
       }
       await User.accessTokens.delete(user, token)
       return response.status(200).send(BaseMessage(true, "User logged out successfully"))
-    } catch (error) {
+    } catch (error: any) {
       return response.status(error.status || 500).send(BaseMessage(false, error.message))
     }
   }
