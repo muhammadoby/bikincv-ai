@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "author": {
     "name": "AW BALI DIGITAL",
-    "email": "awbalidigital@gmail.com",
+    "email": "dev.awbalidigital@gmail.com",
     "url": "https://awbalidigital.com"
   },
   "private": true,
@@ -41,7 +41,7 @@
     "@adonisjs/eslint-config": "^2.0.0",
     "@adonisjs/prettier-config": "^1.4.4",
     "@adonisjs/tsconfig": "^1.4.0",
-    "@japa/api-client": "^3.1.0",
+    "@japa/api-client": "^3.2.1",
     "@japa/assert": "^4.0.1",
     "@japa/plugin-adonisjs": "^4.0.0",
     "@japa/runner": "^4.2.0",
@@ -81,7 +81,8 @@
     "midtrans-client": "^1.4.3",
     "mysql2": "^3.16.1",
     "pdfjs-dist": "^5.4.530",
-    "reflect-metadata": "^0.2.2"
+    "reflect-metadata": "^0.2.2",
+    "xendit-node": "^7.0.0"
   },
   "hotHook": {
     "boundaries": [

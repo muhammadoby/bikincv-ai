@@ -14,6 +14,8 @@ export default class extends BaseSchema {
 
       table.timestamp('created_at')
       table.timestamp('updated_at')
+
+      table.index(['name', 'id'], 'idx_ai_pricings_name')
     })
   }
 

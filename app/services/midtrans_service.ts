@@ -10,7 +10,7 @@ import PaymentSuccess from '#events/payment_success'
 export class MidtransService {
 
   // define snap instance
-  private static snap = new midtransClient.Snap({
+   private static snap = new midtransClient.Snap({
     isProduction: env.get('MIDTRANS_IS_PRODUCTION') === 'true',
     serverKey: env.get('MIDTRANS_SERVER_KEY', ''),
     clientKey: env.get('MIDTRANS_CLIENT_KEY', ''),
@@ -108,7 +108,6 @@ export class MidtransService {
       logger.info("Payment success");
 
       await trx.commit();
-
 
       // send email notification
       PaymentSuccess.dispatch({

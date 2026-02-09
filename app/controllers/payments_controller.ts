@@ -1,7 +1,6 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import BaseMessage from '../utils/base_message.js'
 import { MidtransService } from '#services/midtrans_service'
-import logger from '@adonisjs/core/services/logger'
 
 export default class PaymentsController {
   /**

@@ -10,6 +10,8 @@ export default class extends BaseSchema {
       table.string('name').notNullable()
       table.text('description').nullable()
       table.string('code').notNullable().unique()
+      table.boolean('for_mobile').nullable().defaultTo(false)
+      table.boolean('for_web').nullable().defaultTo(false)
       table.string('slug').notNullable().unique()
       table.date('start_date').notNullable()
       table.date('end_date').nullable()

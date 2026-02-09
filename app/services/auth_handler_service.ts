@@ -22,7 +22,7 @@ export class AuthHandlerService {
         access_token: oat,
         refresh_token: rt,
       }
-    } catch (error) {
+    } catch (error: any) {
       throw new HttpException(error.message || "Something went wrong", error.status || 500)
     }
   }
@@ -38,7 +38,7 @@ export class AuthHandlerService {
       return {
         user: user,
       }
-    } catch (error) {
+    } catch (error: any) {
       throw new HttpException(error.message || "Something went wrong", error.status || 500)
     }
   }

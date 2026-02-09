@@ -18,6 +18,12 @@ export default class Promo extends BaseModel {
   declare code: string
 
   @column()
+  declare forMobile?: boolean | null
+
+  @column()
+  declare forWeb?: boolean | null
+
+  @column()
   declare slug: string
 
   @column()

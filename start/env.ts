@@ -90,6 +90,7 @@ export default await Env.create(new URL('../', import.meta.url), {
   MIDTRANS_IS_PRODUCTION: Env.schema.string(),
   MIDTRANS_SERVER_KEY: Env.schema.string(),
   MIDTRANS_CLIENT_KEY: Env.schema.string(),
+  XENDIT_SECRET_KEY: Env.schema.string(),
 
   /*
   |----------------------------------------------------------

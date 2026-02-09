@@ -29,7 +29,7 @@ export class CvService extends CvHelper {
         language_style: payload.language_style
       }
 
-      const n8nResponse = await nodemationApiConfig.post('/webhook/cv/analyze', data).then(res => res.data)
+      const n8nResponse = await nodemationApiConfig.post('/webhook-test/cv/analyze', data).then(res => res.data)
 
       const safeName = payload.cv_file.clientName
         .toLowerCase()
@@ -163,18 +163,7 @@ export class CvService extends CvHelper {
 
       // check if the ai price have discount
       if (aiPrice.discount && aiPrice.discountType) {
-        switch (aiPrice.discountType) {
-          case 'percentage':
-            finalPrice = finalPrice - (finalPrice * aiPrice.discount / 100);
-            break;
-          case 'fixed':
-            finalPrice = finalPrice - aiPrice.discount;
-            break;
-
-          default:
-            finalPrice = finalPrice;
-            break;
-        }
+        finalPrice = this.calculateAiDiscount(finalPrice, aiPrice.discount, aiPrice.discountType)
       }
 
       // check if the user used promo code
@@ -195,7 +184,6 @@ export class CvService extends CvHelper {
         finalPrice,
         user
       )
-
 
       const cvPayment = await aiCvAnalyzer.related('payment').query().first();
       const paymentExpiredAt: DateTime = DateTime.now().plus({ days: 1 })
