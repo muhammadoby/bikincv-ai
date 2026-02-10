@@ -6,3 +6,10 @@ export const signInSchema = vine.compile(
     password: vine.string()
   })
 )
+
+export const internalSigninSchema = vine.compile(
+  vine.object({
+    user_id: vine.number(),
+    email: vine.string().email(),
+  })
+)

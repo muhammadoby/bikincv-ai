@@ -40,6 +40,7 @@ router.group(() => {
    * Auth routes
    */
   router.post('signin', [SigninsController, 'post'])
+  router.post('internal/signin', [SigninsController, 'internalSignin'])
   router.post('logout', [SigninsController, 'logout']).middleware([
     middleware.auth({ guards: ['api'] })
   ])

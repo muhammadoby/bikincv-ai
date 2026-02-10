@@ -1,6 +1,6 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import BaseMessage from '../utils/base_message.js'
-import { signInSchema } from '#validators/sign_in_validator'
+import { internalSigninSchema, signInSchema } from '#validators/sign_in_validator'
 import { inject } from '@adonisjs/core'
 import { AuthHandlerService } from '#services/auth_handler_service'
 import User from '#models/user'
@@ -28,6 +28,26 @@ export default class SigninsController {
       const result = await this.handler.webHandler(payload)
       return response.status(200).send(BaseMessage(true, "User logged in successfully", result))
 
+    } catch (error: any) {
+      return response.status(error.status || 500).send(BaseMessage(false, error.message))
+    }
+  }
+
+  /**
+   * @internalSignin
+   * @summary Method to sign in user
+   * @description Method to sign in user
+   */
+  async internalSignin({ request, response }: HttpContext) {
+    const payload = await request.validateUsing(internalSigninSchema);
+
+    // sign in user
+    try {
+      const user = await User.query().where('user_id', payload.user_id).andWhere('email', payload.email).firstOrFail();
+
+      const token = await User.accessTokens.create(user);
+
+      return response.status(200).send(BaseMessage(true, "User logged in successfully", { access_token: token }))
     } catch (error: any) {
       return response.status(error.status || 500).send(BaseMessage(false, error.message))
     }
