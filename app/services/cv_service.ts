@@ -29,7 +29,7 @@ export class CvService extends CvHelper {
         language_style: payload.language_style
       }
 
-      const n8nResponse = await nodemationApiConfig.post('/webhook-test/cv/analyze', data).then(res => res.data)
+      const n8nResponse = await nodemationApiConfig.post('/webhook/cv/analyze', data).then(res => res.data)
 
       const safeName = payload.cv_file.clientName
         .toLowerCase()
@@ -57,6 +57,7 @@ export class CvService extends CvHelper {
       const aiResponse = aiCvAnalyzer.aiResponse as CvAnalysisResponse;
 
       return {
+        id: aiCvAnalyzer.id,
         cvPath: aiCvAnalyzer.cvPath,
         selected_language: payload.cv_lang,
         language_style: payload.language_style,
