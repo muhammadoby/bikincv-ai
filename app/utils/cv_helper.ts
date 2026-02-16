@@ -90,7 +90,7 @@ function parseHeader(fullText: string, headerSection: string) {
     email,
     website: website.trim(),
   }
-}
+} 
 
 /**
  * CV Helper Class

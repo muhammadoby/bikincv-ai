@@ -26,7 +26,11 @@ export class CvService extends CvHelper {
       const data = {
         ...result,
         cv_lang: payload.cv_lang,
-        language_style: payload.language_style
+        language_style: payload.language_style,
+        program_campus_name: payload.program_campus_name,
+        role_title: payload.role_title,
+        review_purpose: payload.cv_purpose,
+        job_description: payload.job_description
       }
 
       const n8nResponse = await nodemationApiConfig.post('/webhook/cv/analyze', data).then(res => res.data)
@@ -128,6 +132,7 @@ export class CvService extends CvHelper {
             actionPoints: aiResponse.result.overallImpression.actionPoints,
             whyItsImportant: aiResponse.result.overallImpression.whyItsImportant
           },
+          response_lang: aiResponse.result.response_lang,
           contactInformation: aiResponse.result.contactInformation,
           relevantSkill: aiResponse.result.relevantSkill,
         },

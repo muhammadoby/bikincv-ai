@@ -1,6 +1,8 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import BaseMessage from '../utils/base_message.js'
 import { MidtransService } from '#services/midtrans_service'
+import { checkVoucherSchema } from '#validators/payment_validator'
+import Promo from '#models/promo'
 
 export default class PaymentsController {
   /**
@@ -47,6 +49,28 @@ export default class PaymentsController {
 
     } catch (error: any) {
       return response.status(error.status || 500).send(BaseMessage(false, error.message))
+    }
+  }
+
+  /**
+   * @checkVoucher
+   * @summary Method to check voucher
+   * @description Method to check voucher
+   * @requestBody <checkVoucherSchema> - Voucher code
+   */
+  async checkVoucher({ response, request }: HttpContext) {
+    const payload = await request.validateUsing(checkVoucherSchema)
+    try {
+      const result = await Promo.query().where('code', payload.promo_code).where('is_active', true).where('start_date', '<=', new Date()).where('end_date', '>=', new Date()).first()
+
+      // check if voucher is valid
+      if (!result) {
+        return response.status(404).send(BaseMessage(false, "Voucher invalid!"))
+      }
+
+      return response.status(200).send(BaseMessage(true, "Voucher found", result))
+    } catch (error: any) {
+      return response.status(error.status || 500).send(BaseMessage(false, error.message || 'Something went wrong', error))
     }
   }
 }

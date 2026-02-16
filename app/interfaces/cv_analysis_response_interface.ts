@@ -6,6 +6,7 @@ export interface Result {
   drinks: Drink[];
   ai_model: string;
   keywords: Keywords;
+  response_lang: string;
   relevantSkill: ScoredSection;
   workExperience: ScoredSection;
   experienceMatch: string;

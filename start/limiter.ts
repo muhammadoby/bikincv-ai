@@ -16,5 +16,5 @@ export const apiThottle = limiter.define('global', () => {
 })
 
 export const AiThottle = limiter.define('ai', () => {
-  return limiter.allowRequests(5).every('1 minute')
+  return limiter.allowRequests(20).every('1 minute')
 })

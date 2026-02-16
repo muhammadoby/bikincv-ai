@@ -31,6 +31,7 @@ router.group(() => {
     router.get('/history', [CvsController, 'history'])
     router.get('/history/:id', [CvsController, 'show'])
     router.post('/pay/:id', [CvsController, 'pay'])
+    router.post('/payment/check-voucher', [PaymentsController, 'checkVoucher'])
   }).prefix('/ai/cv').middleware([
     AiThottle,
     middleware.auth({ guards: ['api'] })
