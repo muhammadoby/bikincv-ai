@@ -30,6 +30,12 @@ export class CvService extends CvHelper {
         program_campus_name: payload.program_campus_name,
         role_title: payload.role_title,
         review_purpose: payload.cv_purpose,
+        current_date: new Date().toISOString().split('T')[0],
+        current_date_readable: new Date().toLocaleDateString('id-ID', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        }),
         job_description: payload.job_description
       }
 
