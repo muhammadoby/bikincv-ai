@@ -12,6 +12,8 @@ import { MidtransService } from './midtrans_service.js'
 import { DateTime } from 'luxon'
 import CvHelper from '../utils/cv_helper.js'
 import CreatePayment from '#events/create_payment'
+import db from '@adonisjs/lucid/services/db'
+import env from '#start/env'
 (global as any).DOMMatrix = DOMMatrix
 
 export class CvService extends CvHelper {
@@ -115,6 +117,9 @@ export class CvService extends CvHelper {
       overallImpression: any;
       contactInformation: any;
     };
+  } | {
+    cvPath: string;
+    aiResponse: CvAnalysisResponse;
   }> {
     try {
       const aiCvAnalyzer = await user.related('aiCvAnalyzers').query().select('id', 'aiResponse', 'cvPath').where('id', historyId).firstOrFail();
@@ -123,11 +128,31 @@ export class CvService extends CvHelper {
 
       // check if payment is paid
       if (payment && payment.status === 'paid') {
-        return aiCvAnalyzer
+        const aiResponseRaw = aiCvAnalyzer.aiResponse;
+
+        const aiResponse: CvAnalysisResponse =
+          typeof aiResponseRaw === 'string'
+            ? JSON.parse(aiResponseRaw)
+            : aiResponseRaw;
+
+        if (!aiResponse?.result?.overallImpression) {
+          throw new HttpException('AI response invalid', 500);
+        }
+
+        return { aiResponse, cvPath: aiCvAnalyzer.cvPath };
       }
 
       // get ai response
-      const aiResponse = aiCvAnalyzer.aiResponse as CvAnalysisResponse;
+      const aiResponseRaw = aiCvAnalyzer.aiResponse;
+
+      const aiResponse: CvAnalysisResponse =
+        typeof aiResponseRaw === 'string'
+          ? JSON.parse(aiResponseRaw)
+          : aiResponseRaw;
+
+      if (!aiResponse?.result?.overallImpression) {
+        throw new HttpException('AI response invalid', 500);
+      }
 
       return {
         cvPath: aiCvAnalyzer.cvPath,
@@ -140,7 +165,7 @@ export class CvService extends CvHelper {
           },
           response_lang: aiResponse.result.response_lang,
           contactInformation: aiResponse.result.contactInformation,
-          relevantSkill: aiResponse.result.relevantSkill,
+          // relevantSkill: aiResponse.result.relevantSkill,
         },
       }
 
@@ -153,6 +178,7 @@ export class CvService extends CvHelper {
    * Method to handle payment for AI CV Reviewers
    */
   async payForCvAnalysis(user: User, historyId: number, payload: Infer<typeof CvPaymentSchema>) {
+    const trx = await db.transaction();
     try {
 
       // declare variable
@@ -160,8 +186,16 @@ export class CvService extends CvHelper {
       let totalAmount: number = 0;
       let promoId: number | null = null;
 
-      const aiCvAnalyzer = await user.related('aiCvAnalyzers').query().where('id', historyId).firstOrFail();
-      const aiPayment = await aiCvAnalyzer.related('payment').query().first();
+      const aiCvAnalyzer = await user
+        .related('aiCvAnalyzers')
+        .query()
+        .where('id', historyId)
+        .firstOrFail();
+
+      const aiPayment = await aiCvAnalyzer
+        .related('payment')
+        .query()
+        .first();
 
       // check if cv is already paid
       if (aiPayment && aiPayment.status === 'paid') throw new HttpException('CV Analysis already paid', 400)
@@ -189,6 +223,38 @@ export class CvService extends CvHelper {
         finalPrice = this.calculatePromo(finalPrice, promo);
       }
 
+      // check if token is not expired
+      if (aiPayment && aiPayment.expiresAt && aiPayment.expiresAt > DateTime.now()) {
+        return {
+          PaymentGateway: {
+            token: aiPayment.gatewayToken,
+            redirect_url: env.get('MIDTRANS_IS_PRODUCTION') == 'true'
+              ? 'https://app.midtrans.com' + `/snap/v4/redirection/${aiPayment.gatewayToken}`
+              : 'https://app.sandbox.midtrans.com' + `/snap/v4/redirection/${aiPayment.gatewayToken}`,
+            expired_at: aiPayment.expiresAt
+          },
+          selected_payment: payload.payment_method
+        }
+      }
+
+      const latestPayment = await aiCvAnalyzer
+        .related('payment')
+        .query()
+        .first();
+
+      if (latestPayment && latestPayment.status === 'pending' && latestPayment.expiresAt && latestPayment.expiresAt > DateTime.now()) {
+        return {
+          PaymentGateway: {
+            token: latestPayment.gatewayToken,
+            redirect_url: env.get('MIDTRANS_IS_PRODUCTION') == 'true'
+              ? 'https://app.midtrans.com' + `/snap/v4/redirection/${latestPayment.gatewayToken}`
+              : 'https://app.sandbox.midtrans.com' + `/snap/v4/redirection/${latestPayment.gatewayToken}`,
+            expired_at: latestPayment.expiresAt
+          },
+          selected_payment: payload.payment_method
+        }
+      }
+
       // create midtrans payment gateway
       const orderId = MidtransService.createOrderId();
       const midtrans = await MidtransService.createTransaction(
@@ -197,16 +263,15 @@ export class CvService extends CvHelper {
         user
       )
 
-      const cvPayment = await aiCvAnalyzer.related('payment').query().first();
-      const paymentExpiredAt: DateTime = DateTime.now().plus({ days: 1 })
+      const paymentExpiredAt: DateTime = DateTime.now().plus({ hours: 23 })
 
       // check if payment already exist
-      if (cvPayment) {
+      if (aiPayment) {
 
         // check if cv has been paid
-        if (cvPayment.status === 'paid') throw new HttpException('CV Analysis already paid', 400)
+        if (aiPayment.status === 'paid') throw new HttpException('CV Analysis already paid', 400)
 
-        await aiCvAnalyzer.related('payment').query().where('id', cvPayment.id).update({
+        await aiCvAnalyzer.useTransaction(trx).related('payment').query().where('id', aiPayment.id).update({
           paymentMethod: payload.payment_method,
           totalAmount: totalAmount,
           promoId: promoId,
@@ -218,7 +283,7 @@ export class CvService extends CvHelper {
         })
       } else {
         // save payment to database
-        await aiCvAnalyzer.related('payment').create({
+        await aiCvAnalyzer.useTransaction(trx).related('payment').create({
           paymentMethod: payload.payment_method,
           totalAmount: totalAmount,
           promoId: promoId,
@@ -239,6 +304,8 @@ export class CvService extends CvHelper {
         totalPaid: finalPrice
       })
 
+      await trx.commit();
+
       return {
         PaymentGateway: {
           ...midtrans,
@@ -247,6 +314,7 @@ export class CvService extends CvHelper {
         selected_payment: payload.payment_method
       }
     } catch (error: any) {
+      await trx.rollback();
       throw new HttpException(error.message, error.status || 500)
     }
   }
