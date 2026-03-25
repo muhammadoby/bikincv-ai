@@ -10,7 +10,7 @@ export default class BasesController {
   async ping({ response }: HttpContext) {
     try {
       return response.status(200).send(BaseMessage(true, 'pong'))
-    } catch (error) {
+    } catch (error: any) {
       return response.status(error.status || 500).send(BaseMessage(false, error.message))
     }
   }

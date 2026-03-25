@@ -19,6 +19,7 @@ export default class SendPaymentNotification {
                     .from('no-reply@bikincv.com')
                     .htmlView('mail/payment_email', {
                         user: data.user,
+                        orderId: data.reviewId,
                         orderNumber: data.orderId,
                         paymentLink: data.paymentLink,
                         expiredTime: data.expiredTime,

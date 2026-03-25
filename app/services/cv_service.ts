@@ -21,6 +21,7 @@ export class CvService extends CvHelper {
    * Method to analyze CV File
    */
   async analyzeCvFile(payload: Infer<typeof CvAnalyzeSchema>, user: User) {
+
     try {
       const result = await this.summarize(payload)
 
@@ -54,15 +55,34 @@ export class CvService extends CvHelper {
       // move cv to storage
       await payload.cv_file.moveToDisk(`/cv-analyzer/${generateCvName}`, 'fs')
 
+      // Get order id
+      const cvReviewId = await AiCvAnalyzer.query().orderBy('created_at', 'desc').select('order_number').first()
+
+      let nextNumber
+
+      if (cvReviewId && cvReviewId.orderNumber) {
+        const baseNumber = parseInt(cvReviewId.orderNumber.toString().slice(1))
+        nextNumber = baseNumber + 1
+      } else {
+        nextNumber = 1
+      }
+
+      const orderId = MidtransService.createOrderId()
+      const orderNumber = Number(`800000${nextNumber}`)
+
       // save ai response to db
       const aiCvAnalyzer = await user.related('aiCvAnalyzers').create({
         requestPayload: payload,
         cvRawText: result.raw_text,
+        orderId: Number(orderId),
+        orderNumber: orderNumber,
         cvParsedJson: result.parsed_json,
         cvMarkdown: result.markdown_version,
         cvPath: `/cv-analyzer/${generateCvName}`,
         aiResponse: Array.isArray(n8nResponse) ? n8nResponse[0] : n8nResponse,
-        aiModel: Array.isArray(n8nResponse) ? n8nResponse[0].result.ai_model : n8nResponse.result.ai_model,
+        aiModel: Array.isArray(n8nResponse)
+          ? n8nResponse[0].result.ai_model
+          : n8nResponse.result.ai_model,
       })
 
       // ai parsing
@@ -255,39 +275,53 @@ export class CvService extends CvHelper {
         }
       }
 
-      // create midtrans payment gateway
-      const orderId = MidtransService.createOrderId();
-      const midtrans = await MidtransService.createTransaction(
-        orderId,
-        finalPrice,
-        user
-      )
+      const paymentExpiredAt: DateTime = DateTime.now().plus({ hours: 15 })
 
-      const paymentExpiredAt: DateTime = DateTime.now().plus({ hours: 23 })
+      let midtrans;
 
       // check if payment already exist
       if (aiPayment) {
+        // new order id
+        const newOrderId = MidtransService.createOrderId();
 
         // check if cv has been paid
         if (aiPayment.status === 'paid') throw new HttpException('CV Analysis already paid', 400)
+
+        // create new transaction
+        midtrans = await MidtransService.createTransaction(
+          newOrderId,
+          finalPrice,
+          user
+        )
+
+        // update order id
+        await AiCvAnalyzer.query().where('id', aiCvAnalyzer.id).update({
+          orderId: newOrderId
+        })
 
         await aiCvAnalyzer.useTransaction(trx).related('payment').query().where('id', aiPayment.id).update({
           paymentMethod: payload.payment_method,
           totalAmount: totalAmount,
           promoId: promoId,
-          orderId: orderId,
+          orderId: newOrderId,
           totalPaid: finalPrice,
           status: 'pending',
           gatewayToken: midtrans.token,
           expiresAt: paymentExpiredAt.toFormat('yyyy-MM-dd HH:mm:ss')
         })
       } else {
+        midtrans = await MidtransService.createTransaction(
+          aiCvAnalyzer.orderId.toString(),
+          finalPrice,
+          user
+        )
+
         // save payment to database
         await aiCvAnalyzer.useTransaction(trx).related('payment').create({
           paymentMethod: payload.payment_method,
           totalAmount: totalAmount,
           promoId: promoId,
-          orderId: orderId,
+          orderId: aiCvAnalyzer.orderId.toString(),
           totalPaid: finalPrice,
           status: 'pending',
           gatewayToken: midtrans.token,
@@ -298,9 +332,10 @@ export class CvService extends CvHelper {
       // send notification
       CreatePayment.dispatch({
         user: user,
-        orderId: orderId,
+        orderId: aiCvAnalyzer.orderId.toString(),
         expiredTime: paymentExpiredAt.toFormat('yyyy-MM-dd HH:mm:ss'),
-        paymentLink: midtrans.redirect_url,
+        reviewId: aiCvAnalyzer.id,
+        paymentLink: `https://bikincv.com/review-cv-ai/pay/${aiCvAnalyzer.id}`,
         totalPaid: finalPrice
       })
 

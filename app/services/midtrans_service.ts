@@ -109,9 +109,11 @@ export class MidtransService {
 
       await trx.commit();
 
+      const aiCvAnalyzer = await transaction.related('aiCvAnalyzer').query().select('order_number').firstOrFail()
+
       // send email notification
       PaymentSuccess.dispatch({
-        orderNumber: payload.order_id,
+        orderNumber: aiCvAnalyzer.orderNumber.toString(),
         user: transaction.aiCvAnalyzer.user
       })
 

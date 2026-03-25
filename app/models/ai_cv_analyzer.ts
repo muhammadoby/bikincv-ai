@@ -12,6 +12,12 @@ export default class AiCvAnalyzer extends BaseModel {
   declare userId: number
 
   @column()
+  declare orderId: number
+
+  @column()
+  declare orderNumber: number
+
+  @column()
   declare requestPayload: object
 
   @column()

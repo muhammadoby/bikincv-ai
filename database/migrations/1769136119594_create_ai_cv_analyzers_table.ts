@@ -13,6 +13,8 @@ export default class extends BaseSchema {
       .onDelete('RESTRICT')
       .notNullable()
 
+      table.bigInteger('order_id').notNullable().unique()
+      table.bigInteger('order_number').notNullable().unique()
       table.json('request_payload').notNullable()
       table.text('cv_raw_text').notNullable()
       table.json('cv_parsed_json').notNullable()
