@@ -68,7 +68,7 @@ export class CvService extends CvHelper {
       }
 
       const orderId = MidtransService.createOrderId()
-      const orderNumber = Number(`800000${nextNumber}`)
+      const orderNumber = Number(`8000000${nextNumber}`)
 
       // save ai response to db
       const aiCvAnalyzer = await user.related('aiCvAnalyzers').create({
