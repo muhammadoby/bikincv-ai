@@ -10,7 +10,7 @@ import PaymentSuccess from '#events/payment_success'
 export class MidtransService {
 
   // define snap instance
-   private static snap = new midtransClient.Snap({
+  private static snap = new midtransClient.Snap({
     isProduction: env.get('MIDTRANS_IS_PRODUCTION') === 'true',
     serverKey: env.get('MIDTRANS_SERVER_KEY', ''),
     clientKey: env.get('MIDTRANS_CLIENT_KEY', ''),
@@ -105,17 +105,20 @@ export class MidtransService {
 
       (await transaction.save()).useTransaction(trx);
 
-      logger.info("Payment success");
+      logger.info("Payment callback processed");
 
       await trx.commit();
 
       const aiCvAnalyzer = await transaction.related('aiCvAnalyzer').query().select('order_number').firstOrFail()
 
-      // send email notification
-      PaymentSuccess.dispatch({
-        orderNumber: aiCvAnalyzer.orderNumber.toString(),
-        user: transaction.aiCvAnalyzer.user
-      })
+      // send email notification when payment is success
+      if (payload.transaction_status === 'settlement') {
+        // send email notification
+        PaymentSuccess.dispatch({
+          orderNumber: aiCvAnalyzer.orderNumber.toString(),
+          user: transaction.aiCvAnalyzer.user
+        })
+      }
 
       return {
         status: 200,
