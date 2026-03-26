@@ -68,7 +68,9 @@ export class CvService extends CvHelper {
       }
 
       const orderId = MidtransService.createOrderId()
-      const orderNumber = Number(`8000000${nextNumber}`)
+      // ensure 6 digit counter
+      const nextNumberStr = nextNumber.toString().padStart(6, '0')
+      const orderNumber = Number(`80${nextNumberStr}`)
 
       // save ai response to db
       const aiCvAnalyzer = await user.related('aiCvAnalyzers').create({
