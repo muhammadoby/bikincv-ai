@@ -7,6 +7,7 @@ import os from 'os'
 import path from 'path'
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs'
 import pricingEngine from './pricing_engine.js'
+import logger from '@adonisjs/core/services/logger'
 
 function cleanPdfText(text: string): string {
   return text
@@ -51,7 +52,7 @@ function enhanceForAI(text: string): string {
     '\n\nEXPERIENCE\n'
   )
   t = t.replace(
-    /(?:^|\n\s*)(EDUCATION|ACADEMIC|ACADEMIC BACKGROUND|PENDIDIKAN|RIWAYAT PENDIDIKAN|LATAR BELAKANG PENDIDIKAN|RIWAYAT AKADEMIK)(?:\s*$|\s*\n)/gim,
+    /(?:^|\n\s*)(EDUCATION|ACADEMIC|ACADEMIC BACKGROUND|PENDIDIKAN|RIWAYAT PENDIDIKAN|LATAR BELAKANG PENDIDIKAN|RIWAYAT AKADEMIK|EDUKASI)(?:\s*$|\s*\n)/gim,
     '\n\nEDUCATION\n'
   )
   t = t.replace(
@@ -150,10 +151,14 @@ function parseHeader(fullText: string, headerSection: string) {
       return true
     })
 
-  const nameLine = headerLines.find((l) => {
-    const words = l.trim().split(/\s+/)
-    return words.length >= 1 && words.length <= 6
-  }) || headerLines[0] || fullText.split('\n').find((l) => l.trim().length > 2) || ''
+  const nameLine =
+    headerLines.find((l) => {
+      const words = l.trim().split(/\s+/)
+      return words.length >= 1 && words.length <= 6
+    }) ||
+    headerLines[0] ||
+    fullText.split('\n').find((l) => l.trim().length > 2) ||
+    ''
 
   return {
     name: nameLine.trim(),
@@ -199,6 +204,55 @@ async function extractTextFromBuffer(buffer: Buffer): Promise<string> {
   }
 
   return fullText
+}
+function isCvDocument(text: string): boolean {
+  const normalized = text.toLowerCase()
+  let score = 0
+
+  const sectionKeywords = [
+    [
+      'curriculum vitae', 'curiculum vitae', 'resume', 'cv ',
+      'data pribadi', 'personal info', 'informasi pribadi',
+    ],
+    [
+      'education', 'pendidikan', 'riwayat pendidikan',
+      'academic', 'edukasi', 'riwayat akademik',
+    ],
+    [
+      'experience', 'pengalaman', 'pengalaman kerja',
+      'riwayat pekerjaan', 'riwayat kerja', 'work history',
+    ],
+    [
+      'skill', 'skills', 'keahlian', 'keterampilan',
+      'kemampuan', 'kompetensi',
+    ],
+    [
+      'profile', 'profil', 'summary', 'about me',
+      'tentang saya', 'ringkasan', 'objective',
+    ],
+    [
+      'certificate', 'sertifikat', 'certification',
+      'penghargaan', 'achievement', 'awards',
+    ],
+    [
+      'organisasi', 'organization', 'volunteer',
+      'relawan', 'kegiatan',
+    ],
+  ]
+
+  for (const group of sectionKeywords) {
+    if (group.some((kw) => normalized.includes(kw))) {
+      score++
+    }
+  }
+
+  const hasEmail = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/.test(text)
+  if (hasEmail) score++
+
+  const hasPhone = /(?:\+62|628|08|\+\d{1,3}[\s-]?)[\d\s-]{7,14}/.test(text)
+  if (hasPhone) score++
+
+  return score >= 3 // Adjust to higher or lower as needed: 3 is a good balance for basic CV detection, but you can set to 4 for stricter validation or 2 for more leniency.
 }
 
 export default class CvHelper extends pricingEngine {
@@ -254,6 +308,11 @@ export default class CvHelper extends pricingEngine {
         throw new HttpException('Could not extract text from PDF', 422)
       }
 
+      // Check if the extracted text has CV-like characteristics
+      if (!isCvDocument(rawText)) {
+        throw new HttpException('File CV PDF yang kamu unggah tidak sesuai format. Silahkan periksa dan coba lagi!', 422)
+      }
+
       const fixed = fixSpacedLetters(rawText)
       const spaced = normalizeTextSpacing(fixed)
       const cleaned = cleanPdfText(spaced)
@@ -261,12 +320,16 @@ export default class CvHelper extends pricingEngine {
       const sections = splitSections(enhanced)
 
       const experience = (sections.EXPERIENCE || '')
-        .split(/\n(?=\d{4}|\b(?:Jan|Feb|Mar|Apr|Mei|Jun|Jul|Agu|Sep|Okt|Nov|Des|January|February|March|April|May|June|July|August|September|October|November|December)\b)/gi)
+        .split(
+          /\n(?=\d{4}|\b(?:Jan|Feb|Mar|Apr|Mei|Jun|Jul|Agu|Sep|Okt|Nov|Des|January|February|March|April|May|June|July|August|September|October|November|December|Januari|Februari|Maret|April|Mei|Juni|Juli|Agustus|September|Oktober|November|Desember)\b)/gi
+        )
         .map((s) => s.replace(/\n/g, ' ').trim())
         .filter((s) => s.length > 5)
 
       const education = (sections.EDUCATION || '')
-        .split(/\n(?=\d{4}|S1|S2|S3|D1|D2|D3|D4|SMA|SMK|SMP|SD|Bachelor|Master|Doctoral|Diploma|Sarjana|Magister|Doktor)/gi)
+        .split(
+          /\n(?=\d{4}|S1|S2|S3|D1|D2|D3|D4|SMA|SMK|SMP|SD|Bachelor|Master|Doctoral|Diploma|Sarjana|Magister|Doktor)/gi
+        )
         .map((s) => s.replace(/\n/g, ' ').trim())
         .filter((s) => s.length > 5)
 
@@ -336,9 +399,12 @@ export default class CvHelper extends pricingEngine {
       throw new HttpException(error.message, error.status || 500)
     } finally {
       if (ocrOutputPath && fs.existsSync(ocrOutputPath)) {
-        try { fs.unlinkSync(ocrOutputPath) } catch (_) { }
+        try {
+          fs.unlinkSync(ocrOutputPath)
+        } catch (_) {
+          logger.warn(`Failed to delete temp OCR file at ${ocrOutputPath}`)
+        }
       }
     }
   }
 }
-
