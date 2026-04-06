@@ -335,7 +335,7 @@ export class CvService extends CvHelper {
       CreatePayment.dispatch({
         user: user,
         orderId: aiCvAnalyzer.orderId.toString(),
-        expiredTime: paymentExpiredAt.toFormat('yyyy-MM-dd HH:mm:ss'),
+        expiredTime: paymentExpiredAt.toFormat('dd-MM-yyyy HH:mm:ss'),
         reviewId: aiCvAnalyzer.id,
         paymentLink: `https://bikincv.com/review-cv-ai/pay/${aiCvAnalyzer.id}`,
         totalPaid: finalPrice
