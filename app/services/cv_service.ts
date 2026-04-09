@@ -284,7 +284,8 @@ export class CvService extends CvHelper {
       // check if payment already exist
       if (aiPayment) {
         // new order id
-        const newOrderId = MidtransService.createOrderId();
+        // const newOrderId = MidtransService.createOrderId();
+        const newOrderId = aiCvAnalyzer.orderId.toString();
 
         // check if cv has been paid
         if (aiPayment.status === 'paid') throw new HttpException('CV Analysis already paid', 400)
