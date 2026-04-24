@@ -4,7 +4,7 @@ export const CvAnalyzeSchema = vine.compile(
   vine.object({
     cv_file: vine.file({
       extnames: ['pdf', 'PDF'],
-      size: "5mb"
+      size: "2mb"
     }),
     language_style: vine.enum(['professional', 'casual', 'roasting']),
     cv_lang: vine.enum(['id', 'en']),

@@ -42,7 +42,7 @@ export class CvService extends CvHelper {
         job_description: payload.job_description
       }
 
-      const n8nResponse = await nodemationApiConfig.post('/webhook/cv/analyze', data).then(res => res.data)
+      const n8nResponse = await nodemationApiConfig.post(env.get('NODEMATION_AI_ENDPOINT'), data).then(res => res.data)
 
       const safeName = payload.cv_file.clientName
         .toLowerCase()
@@ -144,12 +144,12 @@ export class CvService extends CvHelper {
     aiResponse: CvAnalysisResponse;
   }> {
     try {
-      const aiCvAnalyzer = await user.related('aiCvAnalyzers').query().select('id', 'aiResponse', 'cvPath').where('id', historyId).firstOrFail();
+      const aiCvAnalyzer = user.roleId === 1 ? await AiCvAnalyzer.query().select('id', 'aiResponse', 'cvPath').where('id', historyId).firstOrFail() : await user.related('aiCvAnalyzers').query().select('id', 'aiResponse', 'cvPath').where('id', historyId).firstOrFail();
 
       const payment = await aiCvAnalyzer.related('payment').query().first()
 
       // check if payment is paid
-      if (payment && payment.status === 'paid') {
+      if ((payment && payment.status === 'paid') || user.roleId === 1) {
         const aiResponseRaw = aiCvAnalyzer.aiResponse;
 
         const aiResponse: CvAnalysisResponse =

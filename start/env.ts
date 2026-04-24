@@ -79,6 +79,7 @@ export default await Env.create(new URL('../', import.meta.url), {
   |----------------------------------------------------------
   */
   NODEMATION_AI_URL: Env.schema.string(),
+  NODEMATION_AI_ENDPOINT: Env.schema.string(),
   NODEMATION_AI_APIKEY: Env.schema.string(),
   REDIS_QUEUE: Env.schema.string.optional(),
 

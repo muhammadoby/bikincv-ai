@@ -12,7 +12,6 @@ export class AuthHandlerService {
 
       const user = await User.verifyCredentials(payload.email, payload.password)
 
-
       // generate access and refresh token
       const oat = await User.accessTokens.create(user)
       const rt = await User.refreshTokens.create(user)

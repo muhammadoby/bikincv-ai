@@ -29,7 +29,8 @@ export default defineConfig({
     () => import('@adonisjs/core/commands'),
     () => import('@adonisjs/lucid/commands'),
     () => import('@adonisjs/mail/commands'),
-    () => import('@adonisjs/session/commands')
+    () => import('@adonisjs/session/commands'),
+    () => import('adonisjs-scheduler/commands')
   ],
 
   /*
@@ -57,7 +58,11 @@ export default defineConfig({
     () => import('@adonisjs/redis/redis_provider'),
     () => import('@adonisjs/drive/drive_provider'),
     () => import('@adonisjs/limiter/limiter_provider'),
-    () => import('@adonisjs/session/session_provider')
+    () => import('@adonisjs/session/session_provider'),
+    {
+      file: () => import('adonisjs-scheduler/scheduler_provider'),
+      environment: ['console'],
+    }
   ],
 
   /*
@@ -68,7 +73,10 @@ export default defineConfig({
   | List of modules to import before starting the application.
   |
   */
-  preloads: [() => import('#start/routes'), () => import('#start/kernel'), () => import('#start/swagger_routes'), () => import('#start/test_routes'), () => import('#start/events')],
+  preloads: [() => import('#start/routes'), () => import('#start/kernel'), () => import('#start/swagger_routes'), () => import('#start/test_routes'), () => import('#start/events'), {
+    file: () => import('#start/scheduler'),
+    environment: ['console'],
+  }],
 
   /*
   |--------------------------------------------------------------------------

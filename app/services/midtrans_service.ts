@@ -95,7 +95,7 @@ export class MidtransService {
           transaction.status = 'pending';
           break;
 
-        case 'expired':
+        case 'expire':
           transaction.status = 'expired';
           break;
 
