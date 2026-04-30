@@ -243,6 +243,7 @@ export class CvService extends CvHelper {
 
         // calculate the final price with promo
         finalPrice = this.calculatePromo(finalPrice, promo);
+
       }
 
       // check if token is not expired

@@ -74,6 +74,7 @@ export default class CvsController {
   async pay({ params, response, request, auth }: HttpContext) {
     const { id } = params;
     const payload = await request.validateUsing(CvPaymentSchema)
+
     try {
       const user = auth.getUserOrFail()
 

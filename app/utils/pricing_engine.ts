@@ -8,7 +8,7 @@ export default class pricingEngine {
     switch (promo.discountType) {
       case "percentage":
         return price - (price * promo.discountValue / 100);
-      case "fixed":
+      case "amount":
         return price - promo.discountValue;
       default:
         return price;

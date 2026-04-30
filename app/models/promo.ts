@@ -36,7 +36,7 @@ export default class Promo extends BaseModel {
   declare discountValue: number
 
   @column()
-  declare discountType: "fixed" | "percentage"
+  declare discountType: "amount" | "percentage"
 
   @column()
   declare isAutoUse: boolean
