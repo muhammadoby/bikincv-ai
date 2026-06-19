@@ -12,9 +12,9 @@
 import limiter from '@adonisjs/limiter/services/main'
 
 export const apiThottle = limiter.define('global', () => {
-  return limiter.allowRequests(20).every('1 minute')
+  return limiter.allowRequests(2000).every('1 minute')
 })
 
 export const AiThottle = limiter.define('ai', () => {
-  return limiter.allowRequests(20).every('1 minute')
+  return limiter.allowRequests(2000).every('1 minute')
 })

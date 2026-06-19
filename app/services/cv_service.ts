@@ -51,7 +51,6 @@ export class CvService extends CvHelper {
 
       const generateCvName = `${safeName}-${Date.now()}.${payload.cv_file.extname}`
 
-
       // move cv to storage
       await payload.cv_file.moveToDisk(`/cv-analyzer/${generateCvName}`, 'fs')
 
@@ -114,19 +113,67 @@ export class CvService extends CvHelper {
   /**
    * Method to get CV Analysis history
    */
-  async getCvAnalysisHistory(user: User): Promise<Array<{ id: number, cvPath: string }>> {
+  async getCvAnalysisHistory(user: User): Promise<Array<{id: number, orderNumber: number, cvPath: string, createdAt: DateTime, aiResponse: any}>> {
     try {
-      const aiHistory = (await user.related('aiCvAnalyzers').query().select('id', 'cvPath').orderBy('created_at', 'desc')).map(record => {
+      const records = await user
+        .related('aiCvAnalyzers')
+        .query()
+        .select(
+          'id',
+          'cvPath',
+          'orderNumber',
+          'aiResponse',
+          'created_at'
+        )
+        .preload('payment')
+        .orderBy('created_at', 'desc');
+
+      const aiHistory = records.map((record) => {
+        const aiResponseRaw = record.aiResponse;
+
+        const aiResponse: CvAnalysisResponse =
+          typeof aiResponseRaw === 'string'
+            ? JSON.parse(aiResponseRaw)
+            : aiResponseRaw;
+
+        if (!aiResponse?.result?.overallImpression) {
+          throw new HttpException('AI response invalid', 500);
+        }
+
+        const isPaid =
+          record.payment?.status === 'paid' ||
+          user.roleId === 1;
+
         return {
           id: record.id,
-          cvPath: record.cvPath
-        }
-      })
+          orderNumber: record.orderNumber,
+          cvPath: record.cvPath,
+          createdAt: record.createdAt,
+          paymentStatus: record.payment?.status,
+          aiResponse: {
+            overallImpression: {
+              details: aiResponse.result.overallImpression.details,
+              score: isPaid
+                ? aiResponse.result.overallImpression.score
+                : null,
+              actionPoints:
+                aiResponse.result.overallImpression.actionPoints,
+              whyItsImportant:
+                aiResponse.result.overallImpression.whyItsImportant,
+            },
+            response_lang: aiResponse.result.response_lang,
+            contactInformation:
+              aiResponse.result.contactInformation,
+          },
+        };
+      });
 
       return aiHistory;
-
     } catch (error: any) {
-      throw new HttpException(error.message, error.status || 500)
+      throw new HttpException(
+        error.message || 'Internal Server Error',
+        error.status || 500
+      );
     }
   }
 
@@ -135,12 +182,14 @@ export class CvService extends CvHelper {
    */
   async showCvHistory(user: User, historyId: number): Promise<AiCvAnalyzer | CvAnalysisResponse | {
     cvPath: string;
+    paymentStatus: "paid" | "pending" | "failed" | "expired" | null,
     aiResponse: {
       overallImpression: any;
       contactInformation: any;
     };
   } | {
     cvPath: string;
+    paymentStatus: "paid" | "pending" | "failed" | "expired" | null,
     aiResponse: CvAnalysisResponse;
   }> {
     try {
@@ -161,7 +210,7 @@ export class CvService extends CvHelper {
           throw new HttpException('AI response invalid', 500);
         }
 
-        return { aiResponse, cvPath: aiCvAnalyzer.cvPath };
+        return { aiResponse, paymentStatus: payment?.status ? payment.status : null, cvPath: aiCvAnalyzer.cvPath };
       }
 
       // get ai response
@@ -178,6 +227,7 @@ export class CvService extends CvHelper {
 
       return {
         cvPath: aiCvAnalyzer.cvPath,
+        paymentStatus: payment?.status ? payment.status : null,
         aiResponse: {
           overallImpression: {
             details: aiResponse.result.overallImpression.details,

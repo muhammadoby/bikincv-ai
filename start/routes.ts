@@ -26,16 +26,31 @@ router.group(() => {
   router.get('/health', [HealthChecksController])
   router.post('/payment/callback/:payment_method', [PaymentsController, 'handle'])
 
+  // Web Routes
   router.group(() => {
     router.post('/analyze', [CvsController, 'analyze'])
     router.get('/history', [CvsController, 'history'])
     router.get('/history/:id', [CvsController, 'show'])
     router.post('/pay/:id', [CvsController, 'pay'])
     router.post('/payment/check-voucher', [PaymentsController, 'checkVoucher'])
-  }).prefix('/ai/cv').middleware([
-    AiThottle,
-    middleware.auth({ guards: ['api'] })
-  ])
+  }).prefix('/ai/cv')
+    .middleware([
+      AiThottle,
+      middleware.auth({ guards: ['api'] })
+    ])
+
+  // Mobile routes
+  router.group(() => {
+    router.post('/analyze', [CvsController, 'analyze'])
+    router.get('/history', [CvsController, 'history'])
+    router.get('/history/:id', [CvsController, 'show'])
+    router.post('/pay/:id', [CvsController, 'pay'])
+    router.post('/payment/check-voucher', [PaymentsController, 'checkVoucher'])
+  }).prefix('mobile/ai/cv')
+    .middleware([
+      AiThottle,
+      middleware.auth({ guards: ['api'] })
+    ])
 
   /**
    * Auth routes
