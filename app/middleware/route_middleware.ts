@@ -16,7 +16,7 @@ export default class RouteMiddleware {
     const url = ctx.request.url()
 
     // check if url starts with /storage/uploads
-    if(url.startsWith('/storage/uploads')) return await next()
+    if(url.startsWith('/storage/uploads') || url.startsWith('/uploads')) return await next()
 
     // get secret from header
     const secret = ctx.request.header('x-api-key')
