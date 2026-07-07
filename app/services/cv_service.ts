@@ -79,6 +79,7 @@ export class CvService extends CvHelper {
         orderNumber: orderNumber,
         cvParsedJson: result.parsed_json,
         cvMarkdown: result.markdown_version,
+        platform: payload.is_mobile && payload.device ? "Apps" : "Web",
         cvPath: `/cv-analyzer/${generateCvName}`,
         aiResponse: Array.isArray(n8nResponse) ? n8nResponse[0] : n8nResponse,
         aiModel: Array.isArray(n8nResponse)

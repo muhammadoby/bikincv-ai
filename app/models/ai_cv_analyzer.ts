@@ -36,6 +36,9 @@ export default class AiCvAnalyzer extends BaseModel {
   declare aiModel: string
 
   @column()
+  declare platform: string
+
+  @column()
   declare cvPath: string
 
   @column.dateTime({ autoCreate: true })

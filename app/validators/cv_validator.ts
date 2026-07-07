@@ -10,6 +10,8 @@ export const CvAnalyzeSchema = vine.compile(
     cv_lang: vine.enum(['id', 'en']),
     cv_purpose: vine.string().nullable(),
     role_title: vine.string().nullable(),
+    is_mobile: vine.boolean().optional(),
+    device: vine.string().optional(),
     program_campus_name: vine.string().nullable(),
     job_description: vine.string().nullable()
   })

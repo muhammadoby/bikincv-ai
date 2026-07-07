@@ -3,6 +3,7 @@ import BaseMessage from '../utils/base_message.js'
 import { MidtransService } from '#services/midtrans_service'
 import { checkVoucherSchema } from '#validators/payment_validator'
 import Promo from '#models/promo'
+import { DateTime } from 'luxon'
 
 export default class PaymentsController {
   /**
@@ -61,7 +62,14 @@ export default class PaymentsController {
   async checkVoucher({ response, request }: HttpContext) {
     const payload = await request.validateUsing(checkVoucherSchema)
     try {
-      const result = await Promo.query().where('code', payload.promo_code).where('is_active', true).where('start_date', '<=', new Date()).where('end_date', '>=', new Date()).first()
+      const today = DateTime.now().toISODate()
+
+      const result = await Promo.query()
+        .where('code', payload.promo_code)
+        .where('is_active', true)
+        .where('start_date', '<=', today)
+        .where('end_date', '>=', today)
+        .first()
 
       // check if voucher is valid
       if (!result) {
