@@ -17,6 +17,7 @@ const HealthChecksController = () => import('#controllers/health_checks_controll
 const CvsController = () => import('#controllers/cvs_controller')
 const PaymentsController = () => import('#controllers/payments_controller')
 const SigninsController = () => import('#controllers/signins_controller')
+const CvImportsController = () => import('#controllers/cv_imports_controller')
 
 /**
  * Api Routes
@@ -33,6 +34,9 @@ router.group(() => {
     router.get('/history/:id', [CvsController, 'show'])
     router.post('/pay/:id', [CvsController, 'pay'])
     router.post('/payment/check-voucher', [PaymentsController, 'checkVoucher'])
+
+    // AI CV Migration
+    router.post('/cv-import', [CvImportsController, 'post'])
   }).prefix('/ai/cv')
     .middleware([
       AiThottle,

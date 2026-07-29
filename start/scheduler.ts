@@ -1,11 +1,11 @@
 
-import AutoDeleteCvFile from '#events/auto_delete_cv_file';
 import scheduler from 'adonisjs-scheduler/services/main'
+import AutoDeleteCvFile from '../app/jobs/auto_delete_cv_file.js';
 
 scheduler.withoutOverlapping(() => {
   scheduler.call(async () => {
-    await AutoDeleteCvFile.dispatch() // run auto delete cv file
-  }).everyFiveMinutes();
+    await AutoDeleteCvFile.fire()
+  }).everyFiveMinutes()
 }, {
-  expiresAt: 30_000 // 30 seconds
+  expiresAt: 30_000
 })

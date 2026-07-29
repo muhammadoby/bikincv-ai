@@ -114,7 +114,7 @@ export class CvService extends CvHelper {
   /**
    * Method to get CV Analysis history
    */
-  async getCvAnalysisHistory(user: User): Promise<Array<{id: number, orderNumber: number, cvPath: string, createdAt: DateTime, aiResponse: any}>> {
+  async getCvAnalysisHistory(user: User): Promise<Array<{ id: number, orderNumber: number, cvPath: string, createdAt: DateTime, aiResponse: any }>> {
     try {
       const records = await user
         .related('aiCvAnalyzers')

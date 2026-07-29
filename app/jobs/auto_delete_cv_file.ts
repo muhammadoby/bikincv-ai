@@ -3,8 +3,8 @@ import { DateTime } from "luxon";
 import drive from "@adonisjs/drive/services/main";
 import logger from "@adonisjs/core/services/logger";
 
-export default class AutoDeleteCvFileAction {
-  async handle() {
+export default class AutoDeleteCvFile {
+  static async fire() {
     const storage = drive.use("fs");
 
     const limitDate = DateTime.now().minus({ months: 2 }).toJSDate();

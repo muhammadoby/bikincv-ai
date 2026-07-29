@@ -61,7 +61,7 @@ export default defineConfig({
     () => import('@adonisjs/session/session_provider'),
     {
       file: () => import('adonisjs-scheduler/scheduler_provider'),
-      environment: ['console'],
+      environment: ['console', 'web'],
     }
   ],
 
@@ -75,8 +75,8 @@ export default defineConfig({
   */
   preloads: [() => import('#start/routes'), () => import('#start/kernel'), () => import('#start/swagger_routes'), () => import('#start/test_routes'), () => import('#start/events'), {
     file: () => import('#start/scheduler'),
-    environment: ['console'],
-  }],
+    environment: ['console', 'web'],
+  }, () => import('#start/worker')],
 
   /*
   |--------------------------------------------------------------------------

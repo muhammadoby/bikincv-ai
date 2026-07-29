@@ -29,7 +29,11 @@ export default class HttpExceptionHandler extends ExceptionHandler {
 
     logger.error(error instanceof Error ? error.stack || error.message : String(error))
 
-    if (this.debug) return super.handle(error, ctx)
+    if (this.debug) {
+      logger.error(error instanceof Error ? error.stack || error.message : String(error))
+      return ctx.response.status(500).send(BaseMessage(false, error instanceof Error ? error.stack || error.message : String(error)))
+      // return super.handle(error, ctx)
+    }
 
     return ctx.response.status(500).send(BaseMessage(false, error instanceof Error ? error.message : String(error)))
     // return super.handle(error, ctx)

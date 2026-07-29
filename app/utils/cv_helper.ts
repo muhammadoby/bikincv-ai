@@ -8,6 +8,7 @@ import path from 'path'
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs'
 import pricingEngine from './pricing_engine.js'
 import logger from '@adonisjs/core/services/logger'
+import { importCvSchema } from '#validators/cv_import_schema'
 
 function cleanPdfText(text: string): string {
   return text
@@ -256,7 +257,7 @@ function isCvDocument(text: string): boolean {
 }
 
 export default class CvHelper extends pricingEngine {
-  async summarize(payload: Infer<typeof CvAnalyzeSchema>) {
+  async summarize(payload: Infer<typeof CvAnalyzeSchema | typeof importCvSchema>) {
     let ocrOutputPath: string | null = null
 
     try {
