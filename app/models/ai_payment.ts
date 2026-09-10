@@ -11,7 +11,7 @@ export default class AiPayment extends BaseModel {
   declare aiCvId: number
 
   @column()
-  declare paymentMethod: "midtrans" | "xendit"
+  declare paymentMethod: "midtrans" | "xendit" | "play_billing"
 
   @column()
   declare totalAmount: number

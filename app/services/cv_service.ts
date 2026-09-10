@@ -14,6 +14,7 @@ import CvHelper from '../utils/cv_helper.js'
 import CreatePayment from '#events/create_payment'
 import db from '@adonisjs/lucid/services/db'
 import env from '#start/env'
+import AiPayment from '#models/ai_payment'
 (global as any).DOMMatrix = DOMMatrix
 
 export class CvService extends CvHelper {
@@ -250,14 +251,21 @@ export class CvService extends CvHelper {
   /**
    * Method to handle payment for AI CV Reviewers
    */
-  async payForCvAnalysis(user: User, historyId: number, payload: Infer<typeof CvPaymentSchema>) {
+  async payForCvAnalysis(
+    user: User,
+    historyId: number,
+    payload: Infer<typeof CvPaymentSchema>
+  ) {
     const trx = await db.transaction();
-    try {
+    let payment: AiPayment | null = null;
 
+    try {
       // declare variable
       let finalPrice: number = 0;
       let totalAmount: number = 0;
       let promoId: number | null = null;
+
+      const now = DateTime.now();
 
       const aiCvAnalyzer = await user
         .related('aiCvAnalyzers')
@@ -271,65 +279,91 @@ export class CvService extends CvHelper {
         .first();
 
       // check if cv is already paid
-      if (aiPayment && aiPayment.status === 'paid') throw new HttpException('CV Analysis already paid', 400)
+      if (aiPayment && aiPayment.status === 'paid') {
+        throw new HttpException('CV Analysis already paid', 400);
+      }
 
       // calculate the price
       const aiPrice = await AiPricing.query().first();
-      if (!aiPrice) throw new HttpException('AI Pricing not found', 500)
 
-      finalPrice = aiPrice.price
-      totalAmount = aiPrice.price
+      if (!aiPrice) {
+        throw new HttpException('AI Pricing not found', 500);
+      }
+
+      finalPrice = aiPrice.price;
+      totalAmount = aiPrice.price;
 
       // check if the ai price have discount
       if (aiPrice.discount && aiPrice.discountType) {
-        finalPrice = this.calculateAiDiscount(finalPrice, aiPrice.discount, aiPrice.discountType)
+        finalPrice = this.calculateAiDiscount(
+          finalPrice,
+          aiPrice.discount,
+          aiPrice.discountType
+        );
       }
 
       // check if the user used promo code
       if (payload.promo_code) {
-        const promo = await Promo.query().where('code', payload.promo_code).first();
-        if (!promo) throw new HttpException('Invalid promo code', 400)
+        const promo = await Promo
+          .query()
+          .where('code', payload.promo_code)
+          .first();
+
+        if (!promo) {
+          throw new HttpException('Invalid promo code', 400);
+        }
 
         promoId = promo.id;
 
         // calculate the final price with promo
         finalPrice = this.calculatePromo(finalPrice, promo);
-
       }
 
-      // check if token is not expired
-      if (aiPayment && aiPayment.expiresAt && aiPayment.expiresAt > DateTime.now()) {
-        return {
-          PaymentGateway: {
-            token: aiPayment.gatewayToken,
-            redirect_url: env.get('MIDTRANS_IS_PRODUCTION') == 'true'
-              ? 'https://app.midtrans.com' + `/snap/v4/redirection/${aiPayment.gatewayToken}`
-              : 'https://app.sandbox.midtrans.com' + `/snap/v4/redirection/${aiPayment.gatewayToken}`,
-            expired_at: aiPayment.expiresAt
-          },
-          selected_payment: payload.payment_method
+      // check if existing payment is still pending and not expired
+      if (
+        aiPayment &&
+        aiPayment.status === 'pending' &&
+        aiPayment.expiresAt &&
+        aiPayment.expiresAt > now
+      ) {
+        // Existing Midtrans payment
+        if (
+          aiPayment.paymentMethod === 'midtrans' &&
+          aiPayment.gatewayToken
+        ) {
+          await trx.rollback();
+
+          return {
+            PaymentGateway: {
+              token: aiPayment.gatewayToken,
+              redirect_url:
+                env.get('MIDTRANS_IS_PRODUCTION') == 'true'
+                  ? 'https://app.midtrans.com' +
+                  `/snap/v4/redirection/${aiPayment.gatewayToken}`
+                  : 'https://app.sandbox.midtrans.com' +
+                  `/snap/v4/redirection/${aiPayment.gatewayToken}`,
+              expired_at: aiPayment.expiresAt,
+            },
+            selected_payment: payload.payment_method,
+          };
+        }
+
+        // Existing Play Billing payment
+        if (aiPayment.paymentMethod === 'play_billing') {
+          await trx.rollback();
+
+          return {
+            PaymentGateway: {
+              token: null,
+              redirect_url: null,
+              expired_at: aiPayment.expiresAt,
+            },
+            selected_payment: payload.payment_method,
+          };
         }
       }
 
-      const latestPayment = await aiCvAnalyzer
-        .related('payment')
-        .query()
-        .first();
-
-      if (latestPayment && latestPayment.status === 'pending' && latestPayment.expiresAt && latestPayment.expiresAt > DateTime.now()) {
-        return {
-          PaymentGateway: {
-            token: latestPayment.gatewayToken,
-            redirect_url: env.get('MIDTRANS_IS_PRODUCTION') == 'true'
-              ? 'https://app.midtrans.com' + `/snap/v4/redirection/${latestPayment.gatewayToken}`
-              : 'https://app.sandbox.midtrans.com' + `/snap/v4/redirection/${latestPayment.gatewayToken}`,
-            expired_at: latestPayment.expiresAt
-          },
-          selected_payment: payload.payment_method
-        }
-      }
-
-      const paymentExpiredAt: DateTime = DateTime.now().plus({ hours: 15 })
+      const paymentExpiredAt: DateTime = now.plus({ hours: 15 });
 
       let midtrans;
 
@@ -340,72 +374,134 @@ export class CvService extends CvHelper {
         const newOrderId = aiCvAnalyzer.orderId.toString();
 
         // check if cv has been paid
-        if (aiPayment.status === 'paid') throw new HttpException('CV Analysis already paid', 400)
+        if (aiPayment.status === 'paid') {
+          throw new HttpException('CV Analysis already paid', 400);
+        }
 
-        // create new transaction
-        midtrans = await MidtransService.createTransaction(
-          newOrderId,
-          finalPrice,
-          user
-        )
+        if (payload.payment_method === 'play_billing') {
+          // Update existing payment
+          payment = aiPayment;
 
-        // update order id
-        await AiCvAnalyzer.query().where('id', aiCvAnalyzer.id).update({
-          orderId: newOrderId
-        })
+          payment.useTransaction(trx);
 
-        await aiCvAnalyzer.useTransaction(trx).related('payment').query().where('id', aiPayment.id).update({
-          paymentMethod: payload.payment_method,
-          totalAmount: totalAmount,
-          promoId: promoId,
-          orderId: newOrderId,
-          totalPaid: finalPrice,
-          status: 'pending',
-          gatewayToken: midtrans.token,
-          expiresAt: paymentExpiredAt.toFormat('yyyy-MM-dd HH:mm:ss')
-        })
+          payment.merge({
+            paymentMethod: 'play_billing',
+            totalAmount: totalAmount,
+            promoId: promoId,
+            orderId: newOrderId,
+            totalPaid: finalPrice,
+            status: 'pending',
+            gatewayToken: null,
+            expiresAt: paymentExpiredAt,
+          });
+
+          await payment.save();
+        } else {
+          // create new transaction
+          midtrans = await MidtransService.createTransaction(
+            newOrderId,
+            finalPrice,
+            user
+          );
+
+          // update order id
+          await AiCvAnalyzer
+            .query()
+            .useTransaction(trx)
+            .where('id', aiCvAnalyzer.id)
+            .update({
+              orderId: newOrderId,
+            });
+
+          // Update existing payment
+          payment = aiPayment;
+
+          payment.useTransaction(trx);
+
+          payment.merge({
+            paymentMethod: 'midtrans',
+            totalAmount: totalAmount,
+            promoId: promoId,
+            orderId: newOrderId,
+            totalPaid: finalPrice,
+            status: 'pending',
+            gatewayToken: midtrans.token,
+            expiresAt: paymentExpiredAt,
+          });
+
+          await payment.save();
+        }
       } else {
-        midtrans = await MidtransService.createTransaction(
-          aiCvAnalyzer.orderId.toString(),
-          finalPrice,
-          user
-        )
+        if (payload.payment_method === 'play_billing') {
+          payment = await aiCvAnalyzer
+            .useTransaction(trx)
+            .related('payment')
+            .create({
+              paymentMethod: 'play_billing',
+              totalAmount: totalAmount,
+              promoId: promoId,
+              orderId: aiCvAnalyzer.orderId.toString(),
+              totalPaid: finalPrice,
+              status: 'pending',
+              gatewayToken: null,
+              expiresAt: paymentExpiredAt,
+            });
+        } else {
+          midtrans = await MidtransService.createTransaction(
+            aiCvAnalyzer.orderId.toString(),
+            finalPrice,
+            user
+          );
 
-        // save payment to database
-        await aiCvAnalyzer.useTransaction(trx).related('payment').create({
-          paymentMethod: payload.payment_method,
-          totalAmount: totalAmount,
-          promoId: promoId,
+          // save payment to database
+          payment = await aiCvAnalyzer
+            .useTransaction(trx)
+            .related('payment')
+            .create({
+              paymentMethod: 'midtrans',
+              totalAmount: totalAmount,
+              promoId: promoId,
+              orderId: aiCvAnalyzer.orderId.toString(),
+              totalPaid: finalPrice,
+              status: 'pending',
+              gatewayToken: midtrans.token,
+              expiresAt: paymentExpiredAt,
+            });
+        }
+
+        // send notification
+        CreatePayment.dispatch({
+          user: user,
           orderId: aiCvAnalyzer.orderId.toString(),
+          expiredTime: paymentExpiredAt.toFormat('dd-MM-yyyy HH:mm:ss'),
+          reviewId: aiCvAnalyzer.id,
+          paymentLink: `https://bikincv.com/review-cv-ai/pay/${aiCvAnalyzer.id}`,
           totalPaid: finalPrice,
-          status: 'pending',
-          gatewayToken: midtrans.token,
-          expiresAt: paymentExpiredAt
-        })
+        });
       }
 
-      // send notification
-      CreatePayment.dispatch({
-        user: user,
-        orderId: aiCvAnalyzer.orderId.toString(),
-        expiredTime: paymentExpiredAt.toFormat('dd-MM-yyyy HH:mm:ss'),
-        reviewId: aiCvAnalyzer.id,
-        paymentLink: `https://bikincv.com/review-cv-ai/pay/${aiCvAnalyzer.id}`,
-        totalPaid: finalPrice
-      })
+      if (!payment) {
+        throw new HttpException('Failed to create payment', 500);
+      }
 
       await trx.commit();
 
       return {
+        order_id: payment.id,
         PaymentGateway: {
           ...midtrans,
-          expired_at: paymentExpiredAt.toFormat('yyyy-MM-dd HH:mm:ss')
+          expired_at: paymentExpiredAt.toFormat('yyyy-MM-dd HH:mm:ss'),
         },
-        selected_payment: payload.payment_method
-      }
+        selected_payment: payload.payment_method,
+      };
     } catch (error: any) {
       await trx.rollback();
-      throw new HttpException(error.message, error.status || 500)
+
+      throw new HttpException(
+        error.message,
+        error.status || 500
+      );
     }
   }
+
 }

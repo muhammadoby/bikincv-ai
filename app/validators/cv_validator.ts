@@ -29,6 +29,6 @@ export const CvPaymentSchema = vine.compile(
 
       return !!promo
     }).optional(),
-    payment_method: vine.enum(['midtrans', 'xendit'])
+    payment_method: vine.enum(['midtrans', 'xendit', 'play_billing']).optional()
   })
 )
